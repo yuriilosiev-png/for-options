@@ -49,7 +49,5 @@ jobs:
         env:
           ANDROID_HOME: /usr/local/lib/android/sdk
 
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name:
+      - name: Find APK
+        run: find app/bui
