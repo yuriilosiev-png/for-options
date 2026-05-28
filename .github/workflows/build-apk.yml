@@ -1,5 +1,4 @@
 name: Build APK
-
 on:
   push:
     branches: [ main ]
@@ -9,11 +8,9 @@ on:
       - 'settings.gradle'
       - '.github/workflows/build-apk.yml'
   workflow_dispatch:
-
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -32,6 +29,9 @@ jobs:
           wget -q https://services.gradle.org/distributions/gradle-7.5-bin.zip -O /tmp/gradle.zip
           unzip -q /tmp/gradle.zip -d /opt/gradle
           echo "/opt/gradle/gradle-7.5/bin" >> $GITHUB_PATH
+
+      - name: Decode google-services.json
+        run: echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 -d > app/google-services.json
 
       - name: Copy icons to app res
         run: |
@@ -55,6 +55,6 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: OptionsAnalyst-v1.9
+          name: OptionsAnalyst-v2.0
           path: "**/*.apk"
           retention-days: 30
