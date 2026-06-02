@@ -21,6 +21,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+// v06 пункт 4: для бейджа на иконке (стоковый Android + MIUI Xiaomi)
+import android.app.Notification;
+import android.content.ComponentName;
+
 /**
  * OptionsFirebaseMessagingService
  *
@@ -39,6 +43,8 @@ public class OptionsFirebaseMessagingService extends FirebaseMessagingService {
     public  static final String PREFS_NAME = "OptionsAnalystPrefs";
     public  static final String KEY_TOKEN  = "fcm_token";
     public  static final String KEY_PENDING= "fcm_pending_send";
+    // v06 пункт 4: счётчик непрочитанных уведомлений для бейджа на иконке
+    public  static final String KEY_BADGE  = "fcm_badge_count";
 
     private static final String CHANNEL_ID   = "price_alerts";
     private static final String CHANNEL_NAME = "Price Alerts";
@@ -94,20 +100,42 @@ public class OptionsFirebaseMessagingService extends FirebaseMessagingService {
 
     // ─────────────────────────────────────────────────────────────────
     // Показ нативного уведомления
+    // v06 пункт 4: залоченный экран (VISIBILITY_PUBLIC) + heads-up (IMPORTANCE_HIGH
+    // + звук + вибрация на канале) + бейдж-цифра (setShowBadge + setNumber)
+    // + бейдж для MIUI Xiaomi (broadcast APPLICATION_MESSAGE_UPDATE).
     // ─────────────────────────────────────────────────────────────────
     private void showNotification(String title, String body) {
         NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         if (nm == null) return;
+
+        // v06 пункт 4: увеличиваем счётчик непрочитанных для бейджа
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        int badgeCount = prefs.getInt(KEY_BADGE, 0) + 1;
+        prefs.edit().putInt(KEY_BADGE, badgeCount).apply();
 
         // Создаём канал (для Android 8+ обязательно, на старых версиях игнорируется)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(
                 CHANNEL_ID,
                 CHANNEL_NAME,
-                NotificationManager.IMPORTANCE_HIGH
+                NotificationManager.IMPORTANCE_HIGH   // heads-up + звук по умолчанию
             );
             channel.setDescription("Options price alert notifications");
             channel.enableVibration(true);
+            channel.setVibrationPattern(new long[]{0, 250, 250, 250});
+            // v06 пункт 4: полное содержимое на залоченном экране (не "новое уведомление")
+            channel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
+            // v06 пункт 4: разрешаем бейдж-кружок на иконке
+            channel.setShowBadge(true);
+            // v06 пункт 4: звук уведомления (heads-up со звуком). Системный дефолт.
+            channel.setSound(
+                android.media.RingtoneManager.getDefaultUri(
+                    android.media.RingtoneManager.TYPE_NOTIFICATION),
+                new android.media.AudioAttributes.Builder()
+                    .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .setUsage(android.media.AudioAttributes.USAGE_NOTIFICATION)
+                    .build()
+            );
             nm.createNotificationChannel(channel);
         }
 
@@ -124,11 +152,56 @@ public class OptionsFirebaseMessagingService extends FirebaseMessagingService {
             .setContentTitle("🔔 " + title)
             .setContentText(body)
             .setStyle(new NotificationCompat.BigTextStyle().bigText(body))
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)          // heads-up на Android 7 и ниже
+            .setCategory(NotificationCompat.CATEGORY_MESSAGE)       // приоритет в шторке
+            .setDefaults(NotificationCompat.DEFAULT_ALL)            // звук+вибрация на старых API
+            // v06 пункт 4: полный текст на залоченном экране
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            // v06 пункт 4: цифра-бейдж на иконке (стоковые лаунчеры читают setNumber)
+            .setNumber(badgeCount)
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
             .setVibrate(new long[]{0, 250, 250, 250});
 
-        nm.notify(notifCounter.incrementAndGet(), builder.build());
+        Notification notification = builder.build();
+        nm.notify(notifCounter.incrementAndGet(), notification);
+
+        // v06 пункт 4: бейдж для MIUI (Xiaomi/Redmi). MIUI игнорирует setNumber и
+        // требует собственный broadcast с именем launcher-активити и числом.
+        updateMiuiBadge(notification, badgeCount);
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    // v06 пункт 4: бейдж-кружок для MIUI Xiaomi (Redmi 9 — тестовое устройство).
+    // MIUI не поддерживает стандартный setNumber, использует свой broadcast
+    // android.intent.action.APPLICATION_MESSAGE_UPDATE с extra-полями.
+    // На не-MIUI устройствах broadcast просто игнорируется (try/catch).
+    // ─────────────────────────────────────────────────────────────────
+    private void updateMiuiBadge(Notification notification, int count) {
+        try {
+            // Способ 1 (MIUI 6+): рефлексия по android.app.MiuiNotification на самом
+            // объекте уведомления — самый надёжный для свежих MIUI.
+            Object miui = notification.getClass()
+                .getField("extraNotification").get(notification);
+            miui.getClass().getMethod("setMessageCount", int.class)
+                .invoke(miui, count);
+        } catch (Throwable ignored) {
+            // extraNotification нет — не MIUI или старая версия, пропускаем.
+        }
+        try {
+            // Способ 2 (универсальный MIUI broadcast): имя launcher-активити + число.
+            Intent badge = new Intent("android.intent.action.APPLICATION_MESSAGE_UPDATE");
+            ComponentName cn = new ComponentName(
+                getPackageName(),
+                getPackageName() + ".MainActivity"
+            );
+            badge.putExtra("android.intent.extra.update_application_component_name",
+                cn.flattenToString());
+            badge.putExtra("android.intent.extra.update_application_message_text",
+                count > 0 ? String.valueOf(count) : "");
+            sendBroadcast(badge);
+        } catch (Throwable ignored) {
+            // Не MIUI — broadcast никто не примет, это нормально.
+        }
     }
 }
