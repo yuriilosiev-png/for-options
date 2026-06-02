@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
@@ -20,6 +21,14 @@ import android.webkit.CookieManager;
 import android.net.http.SslError;
 import android.webkit.SslErrorHandler;
 
+// v06 пункт 4: runtime-запрос разрешения POST_NOTIFICATIONS (Android 13+ / API 33).
+// Без этого запроса система НЕ показывает уведомления, даже если permission
+// объявлено в манифесте и FCM-токен зарегистрирован. Это корень "пуш не приходит".
+import android.Manifest;
+import android.content.pm.PackageManager;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+
 import com.google.firebase.messaging.FirebaseMessaging;
 
 import java.lang.ref.WeakReference;
@@ -27,6 +36,9 @@ import java.lang.ref.WeakReference;
 public class MainActivity extends Activity {
 
     private static final String TAG = "OptionsMain";
+
+    // v06 пункт 4: requestCode для запроса POST_NOTIFICATIONS (Android 13+)
+    private static final int REQ_POST_NOTIFICATIONS = 1001;
 
     private WebView webView;
     private static final String APP_URL = "https://yuriilosiev-png.github.io/for-options/index.html";
@@ -64,6 +76,10 @@ public class MainActivity extends Activity {
 
         // ── Создаём канал уведомлений (Android 8+) ──
         createNotificationChannel();
+
+        // v06 пункт 4: запрашиваем разрешение на уведомления (Android 13+ / API 33).
+        // На API < 33 разрешение выдаётся автоматически при создании канала.
+        requestNotificationPermission();
 
         webView = new WebView(this);
         setContentView(webView);
@@ -229,7 +245,45 @@ public class MainActivity extends Activity {
     }
 
     // ─────────────────────────────────────────────────────────────────
+    // v06 пункт 4: runtime-запрос POST_NOTIFICATIONS (Android 13+ / API 33).
+    // Обязателен — без него система блокирует все уведомления приложения,
+    // даже при наличии permission в манифесте и валидного FCM-токена.
+    // На API < 33 ничего не делаем (разрешение даётся неявно).
+    // ─────────────────────────────────────────────────────────────────
+    private void requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= 33) {  // Build.VERSION_CODES.TIRAMISU
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(
+                    this,
+                    new String[]{ Manifest.permission.POST_NOTIFICATIONS },
+                    REQ_POST_NOTIFICATIONS
+                );
+            }
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQ_POST_NOTIFICATIONS) {
+            boolean granted = grantResults.length > 0
+                && grantResults[0] == PackageManager.PERMISSION_GRANTED;
+            Log.d(TAG, "POST_NOTIFICATIONS granted: " + granted);
+            // Если пользователь разрешил — на всякий случай дёргаем токен заново,
+            // чтобы FCM-регистрация прошла гарантированно после выдачи разрешения.
+            if (granted) {
+                fetchFcmToken();
+            }
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────
     // Создание канала уведомлений (Android 8+)
+    // v06 пункт 4: настройки канала ДОЛЖНЫ совпадать с OptionsFirebaseMessagingService,
+    // иначе канал, созданный здесь первым, "заморозит" старые параметры (Android не
+    // позволяет менять importance/visibility/sound существующего канала из кода).
+    // Поэтому здесь тот же набор: IMPORTANCE_HIGH + VISIBILITY_PUBLIC + showBadge + звук.
     // ─────────────────────────────────────────────────────────────────
     private void createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -240,9 +294,43 @@ public class MainActivity extends Activity {
             );
             channel.setDescription("Options price alert notifications");
             channel.enableVibration(true);
+            channel.setVibrationPattern(new long[]{0, 250, 250, 250});
+            channel.setLockscreenVisibility(android.app.Notification.VISIBILITY_PUBLIC);
+            channel.setShowBadge(true);
+            channel.setSound(
+                android.media.RingtoneManager.getDefaultUri(
+                    android.media.RingtoneManager.TYPE_NOTIFICATION),
+                new android.media.AudioAttributes.Builder()
+                    .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .setUsage(android.media.AudioAttributes.USAGE_NOTIFICATION)
+                    .build()
+            );
             NotificationManager nm = getSystemService(NotificationManager.class);
             if (nm != null) nm.createNotificationChannel(channel);
         }
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    // v06 пункт 4: сброс бейджа при открытии приложения.
+    // Обнуляем счётчик непрочитанных и гасим MIUI-бейдж.
+    // ─────────────────────────────────────────────────────────────────
+    private void clearAppBadge() {
+        // Сбрасываем счётчик в SharedPreferences
+        getSharedPreferences(OptionsFirebaseMessagingService.PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .putInt(OptionsFirebaseMessagingService.KEY_BADGE, 0)
+            .apply();
+        // Гасим MIUI-бейдж (broadcast с пустым числом)
+        try {
+            Intent badge = new Intent("android.intent.action.APPLICATION_MESSAGE_UPDATE");
+            badge.putExtra("android.intent.extra.update_application_component_name",
+                getPackageName() + "/" + getPackageName() + ".MainActivity");
+            badge.putExtra("android.intent.extra.update_application_message_text", "");
+            sendBroadcast(badge);
+        } catch (Throwable ignored) {}
+        // Снимаем все активные уведомления из шторки
+        NotificationManager nm = getSystemService(NotificationManager.class);
+        if (nm != null) nm.cancelAll();
     }
 
     @Override
@@ -256,6 +344,8 @@ public class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         webView.onResume();
+        // v06 пункт 4: открыли приложение — гасим бейдж и уведомления
+        clearAppBadge();
         getWindow().getDecorView().setSystemUiVisibility(
             View.SYSTEM_UI_FLAG_FULLSCREEN |
             View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
