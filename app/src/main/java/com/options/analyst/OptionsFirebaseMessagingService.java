@@ -77,31 +77,51 @@ public class OptionsFirebaseMessagingService extends FirebaseMessagingService {
 
     // ─────────────────────────────────────────────────────────────────
     // onMessageReceived — вызывается при получении FCM-сообщения.
-    // v06 пункт 4 (data-only): Worker шлёт ТОЛЬКО data (без notification-блока),
-    // поэтому этот метод вызывается ВСЕГДА — и на переднем плане, и в фоне
-    // (при android.priority=high). Баннер рисует наш showNotification(), а не
-    // система — это обходит подавление авто-баннеров FCM на MIUI.
+    //
+    // v07 пункт 4 (ГИБРИД notification+data, обход бага MIUI):
+    // Worker теперь шлёт notification + data одновременно.
+    //  • Фон/закрыто: FCM-SDK сам рисует баннер из notification-блока, наш сервис
+    //    может не вызываться вовсе (на MIUI он и не вызывается — баг Xiaomi). Это ОК,
+    //    баннер уже на экране от системы.
+    //  • Foreground: сервис вызывается ВСЕГДА. Но баннер из notification-блока в
+    //    foreground система НЕ рисует — рисуем мы. Если же notification-блок есть и
+    //    система его уже показала (стоковый Android в фоне разбудил сервис), мы НЕ
+    //    рисуем второй раз — иначе дубль.
+    //
+    // Правило анти-дубля: рисуем кастом ТОЛЬКО когда приложение на переднем плане.
+    // В фоне баннер — забота системы (notification-блок). Foreground определяем по
+    // живой ссылке на MainActivity (она null/в фоне, когда приложение свёрнуто).
     // ─────────────────────────────────────────────────────────────────
     @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {
         super.onMessageReceived(remoteMessage);
 
         // debug-маяк: фиксируем сам факт вызова + есть ли data/notification
-        boolean hasData = remoteMessage.getData() != null && !remoteMessage.getData().isEmpty();
+        boolean hasData  = remoteMessage.getData() != null && !remoteMessage.getData().isEmpty();
         boolean hasNotif = remoteMessage.getNotification() != null;
-        dbg("onMessageReceived: data=" + hasData + " notif=" + hasNotif);
+
+        // v07 пункт 4: foreground? Определяем сами, БЕЗ правок MainActivity —
+        // через importance процесса. IMPORTANCE_FOREGROUND = приложение на экране.
+        boolean isForeground = isAppForeground();
+
+        dbg("onMessageReceived: data=" + hasData + " notif=" + hasNotif + " fg=" + isForeground);
+
+        // В фоне при наличии notification-блока баннер уже показала система — не дублируем.
+        if (!isForeground && hasNotif) {
+            return;
+        }
 
         String title = null;
         String body  = null;
 
-        // Основной путь (data-only): читаем из data
+        // Основной путь: читаем из data
         Map<String, String> data = remoteMessage.getData();
         if (data != null) {
             title = data.get("title");
             body  = data.get("body");
         }
 
-        // Fallback: поле notification (на случай если payload всё же содержит его)
+        // Fallback: поле notification
         if (title == null && remoteMessage.getNotification() != null) {
             title = remoteMessage.getNotification().getTitle();
             body  = remoteMessage.getNotification().getBody();
@@ -111,6 +131,27 @@ public class OptionsFirebaseMessagingService extends FirebaseMessagingService {
         if (body  == null) body  = "";
 
         showNotification(title, body);
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    // v07 пункт 4: определяет, на переднем ли плане приложение, БЕЗ правок
+    // MainActivity. Используем importance собственного процесса:
+    // IMPORTANCE_FOREGROUND = приложение видимо на экране.
+    // Если на переднем плане — рисуем кастомный баннер сами (notification-блок
+    // система в foreground не показывает). В фоне — баннер уже рисует система
+    // из notification-блока, дубль не нужен.
+    // ─────────────────────────────────────────────────────────────────
+    private boolean isAppForeground() {
+        try {
+            android.app.ActivityManager.RunningAppProcessInfo info =
+                new android.app.ActivityManager.RunningAppProcessInfo();
+            android.app.ActivityManager.getMyMemoryState(info);
+            return info.importance ==
+                android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND;
+        } catch (Throwable t) {
+            // При любой ошибке считаем, что в фоне — пусть рисует система (без дубля).
+            return false;
+        }
     }
 
     // ─────────────────────────────────────────────────────────────────
