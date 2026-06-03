@@ -45,6 +45,8 @@ public class OptionsFirebaseMessagingService extends FirebaseMessagingService {
     public  static final String KEY_PENDING= "fcm_pending_send";
     // v06 пункт 4: счётчик непрочитанных уведомлений для бейджа на иконке
     public  static final String KEY_BADGE  = "fcm_badge_count";
+    // debug-маяк: последнее FCM-событие (время + стадия). Читается из HTML.
+    public  static final String KEY_DEBUG  = "fcm_debug_log";
 
     private static final String CHANNEL_ID   = "price_alerts";
     private static final String CHANNEL_NAME = "Price Alerts";
@@ -84,6 +86,11 @@ public class OptionsFirebaseMessagingService extends FirebaseMessagingService {
     public void onMessageReceived(RemoteMessage remoteMessage) {
         super.onMessageReceived(remoteMessage);
 
+        // debug-маяк: фиксируем сам факт вызова + есть ли data/notification
+        boolean hasData = remoteMessage.getData() != null && !remoteMessage.getData().isEmpty();
+        boolean hasNotif = remoteMessage.getNotification() != null;
+        dbg("onMessageReceived: data=" + hasData + " notif=" + hasNotif);
+
         String title = null;
         String body  = null;
 
@@ -104,6 +111,21 @@ public class OptionsFirebaseMessagingService extends FirebaseMessagingService {
         if (body  == null) body  = "";
 
         showNotification(title, body);
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    // debug-маяк: пишет строку "ЧЧ:ММ:СС | msg" в SharedPreferences.
+    // Читается из HTML (для диагностики без adb/chrome://inspect).
+    // ─────────────────────────────────────────────────────────────────
+    private void dbg(String msg) {
+        try {
+            String ts = new java.text.SimpleDateFormat("HH:mm:ss")
+                .format(new java.util.Date());
+            getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                .edit()
+                .putString(KEY_DEBUG, ts + " | " + msg)
+                .apply();
+        } catch (Throwable ignored) {}
     }
 
     // ─────────────────────────────────────────────────────────────────
@@ -173,6 +195,7 @@ public class OptionsFirebaseMessagingService extends FirebaseMessagingService {
 
         Notification notification = builder.build();
         nm.notify(notifCounter.incrementAndGet(), notification);
+        dbg("showNotification: nm.notify OK badge=" + badgeCount);
 
         // v06 пункт 4: бейдж для MIUI (Xiaomi/Redmi). MIUI игнорирует setNumber и
         // требует собственный broadcast с именем launcher-активити и числом.
