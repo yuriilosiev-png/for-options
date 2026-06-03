@@ -74,8 +74,11 @@ public class OptionsFirebaseMessagingService extends FirebaseMessagingService {
     }
 
     // ─────────────────────────────────────────────────────────────────
-    // onMessageReceived — вызывается когда приложение на переднем плане
-    // (когда в фоне — Firebase сам показывает уведомление из поля notification)
+    // onMessageReceived — вызывается при получении FCM-сообщения.
+    // v06 пункт 4 (data-only): Worker шлёт ТОЛЬКО data (без notification-блока),
+    // поэтому этот метод вызывается ВСЕГДА — и на переднем плане, и в фоне
+    // (при android.priority=high). Баннер рисует наш showNotification(), а не
+    // система — это обходит подавление авто-баннеров FCM на MIUI.
     // ─────────────────────────────────────────────────────────────────
     @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {
@@ -84,16 +87,21 @@ public class OptionsFirebaseMessagingService extends FirebaseMessagingService {
         String title = null;
         String body  = null;
 
-        // Сначала пробуем поле notification
-        if (remoteMessage.getNotification() != null) {
+        // Основной путь (data-only): читаем из data
+        Map<String, String> data = remoteMessage.getData();
+        if (data != null) {
+            title = data.get("title");
+            body  = data.get("body");
+        }
+
+        // Fallback: поле notification (на случай если payload всё же содержит его)
+        if (title == null && remoteMessage.getNotification() != null) {
             title = remoteMessage.getNotification().getTitle();
             body  = remoteMessage.getNotification().getBody();
         }
 
-        // Fallback: поле data (Worker шлёт оба поля одновременно)
-        Map<String, String> data = remoteMessage.getData();
-        if (title == null) title = data.getOrDefault("title", "Options Alert");
-        if (body  == null) body  = data.getOrDefault("body",  "");
+        if (title == null) title = "Options Alert";
+        if (body  == null) body  = "";
 
         showNotification(title, body);
     }
