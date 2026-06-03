@@ -242,6 +242,20 @@ public class MainActivity extends Activity {
         public String getVersion() {
             return "2.0";
         }
+
+        /**
+         * debug: возвращает последнее FCM-событие из SharedPreferences.
+         * Вызывается из JS: AndroidBridge.getDebugLog()
+         * Показывает, вызывался ли onMessageReceived и дошёл ли showNotification.
+         */
+        @JavascriptInterface
+        public String getDebugLog() {
+            MainActivity a = activityRef.get();
+            if (a == null) return "";
+            return a.getSharedPreferences(
+                    OptionsFirebaseMessagingService.PREFS_NAME, Context.MODE_PRIVATE)
+                .getString(OptionsFirebaseMessagingService.KEY_DEBUG, "(пусто)");
+        }
     }
 
     // ─────────────────────────────────────────────────────────────────
