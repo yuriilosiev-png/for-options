@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Terms of Service — Options Analyst</title>
+<style>
+  :root { --bg:#0f1115; --card:#161922; --fg:#e6e8ec; --muted:#9aa0aa; --accent:#4f8cff; --border:#262b36; --warn:#ffb454; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.6 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; }
+  .wrap { max-width:820px; margin:0 auto; padding:24px 18px 80px; }
+  h1 { font-size:1.6rem; margin:.2em 0; }
+  h2 { font-size:1.15rem; margin:1.6em 0 .4em; border-bottom:1px solid var(--border); padding-bottom:.3em; }
+  p, li { color:var(--fg); }
+  .muted { color:var(--muted); font-size:.9rem; }
+  a { color:var(--accent); }
+  .lang-switch { position:sticky; top:0; background:var(--bg); padding:10px 0; display:flex; gap:8px; z-index:10; border-bottom:1px solid var(--border); }
+  .lang-switch button { background:var(--card); color:var(--fg); border:1px solid var(--border); border-radius:8px; padding:8px 16px; cursor:pointer; font-size:.95rem; }
+  .lang-switch button.active { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .box { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px 18px; margin:14px 0; }
+  .warn { border-color:var(--warn); }
+  .warn strong { color:var(--warn); }
+  [data-lang] { display:none; }
+  [data-lang].show { display:block; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="lang-switch">
+    <button id="btn-en" class="active" onclick="setLang('en')">English</button>
+    <button id="btn-ru" onclick="setLang('ru')">Русский</button>
+  </div>
+
+  <!-- ============ ENGLISH ============ -->
+  <div data-lang="en" class="show">
+    <h1>Terms of Service</h1>
+    <p class="muted">App: Options Analyst &nbsp;·&nbsp; Last updated: June 4, 2026</p>
+
+    <div class="box warn">
+      <p><strong>IMPORTANT — NOT FINANCIAL ADVICE.</strong> Options Analyst is an analytical and educational calculator. It is <strong>not</strong> a broker, dealer, investment adviser, or financial institution. It does <strong>not</strong> execute trades, hold funds, or provide personalized investment, trading, tax, or legal advice. All outputs (P&amp;L, Greeks, alerts, prices) are informational estimates only. Trading options and other derivatives involves a high risk of loss, including loss of your entire capital. You are solely responsible for your decisions. Consult a licensed professional before trading.</p>
+    </div>
+
+    <h2>1. Acceptance</h2>
+    <p>By installing or using the App you agree to these Terms. If you do not agree, do not use the App.</p>
+
+    <h2>2. What the App does</h2>
+    <p>The App lets you model options positions and strategies, compute estimated profit/loss and Greeks, view market data fetched from public exchange APIs, and optionally receive price-alert notifications. With your own exchange API keys, it can read your positions and market data directly from the exchange for display and calculation. It does not place, modify, or cancel any order.</p>
+
+    <h2>3. No advice; your responsibility</h2>
+    <p>Nothing in the App constitutes financial, investment, trading, tax, or legal advice or a recommendation to buy or sell any instrument. Calculations are estimates and may contain errors, delays, or inaccuracies, including from third-party data. You assume full responsibility and risk for any decision or action taken based on the App.</p>
+
+    <h2>4. Exchange API keys</h2>
+    <p>You are responsible for the security and permission scope of any API keys you enter. We recommend read-only keys. The App stores keys encrypted on your device only. You are responsible for compliance with the terms of service of any exchange you connect.</p>
+
+    <h2>5. Accuracy and availability</h2>
+    <p>Market data comes from third-party public APIs and may be delayed, incomplete, or unavailable. We do not guarantee accuracy, timeliness, or continuous availability of the App or any data.</p>
+
+    <h2>6. Subscriptions and payments</h2>
+    <p>The App may offer a free tier and an optional paid subscription (with a free trial period). Subscriptions, if enabled, are billed through Google Play Billing under Google's terms. Manage or cancel subscriptions in your Google Play account. Trial and pricing details are shown in the App and on the store listing.</p>
+
+    <h2>7. Acceptable use</h2>
+    <p>You agree not to misuse the App, reverse-engineer it for malicious purposes, or use it for any unlawful activity.</p>
+
+    <h2>8. Disclaimer of warranties</h2>
+    <p>The App is provided "as is" and "as available" without warranties of any kind, express or implied, including merchantability, fitness for a particular purpose, and non-infringement.</p>
+
+    <h2>9. Limitation of liability</h2>
+    <p>To the maximum extent permitted by law, the developer shall not be liable for any trading losses or any direct, indirect, incidental, special, or consequential damages arising from your use of, or inability to use, the App or its data.</p>
+
+    <h2>10. Changes and termination</h2>
+    <p>We may modify these Terms or the App, or discontinue features, at any time. Continued use after changes constitutes acceptance.</p>
+
+    <h2>11. Contact</h2>
+    <p>Losiev Iurii — <a href="mailto:yuriilosiev@gmail.com">yuriilosiev@gmail.com</a></p>
+  </div>
+
+  <!-- ============ RUSSIAN ============ -->
+  <div data-lang="ru">
+    <h1>Условия использования</h1>
+    <p class="muted">Приложение: Options Analyst &nbsp;·&nbsp; Обновлено: 4 июня 2026</p>
+
+    <div class="box warn">
+      <p><strong>ВАЖНО — НЕ ЯВЛЯЕТСЯ ФИНАНСОВЫМ СОВЕТОМ.</strong> Options Analyst — аналитический и образовательный калькулятор. Он <strong>не</strong> является брокером, дилером, инвестиционным советником или финансовым учреждением. Он <strong>не</strong> совершает сделок, не хранит средства и не предоставляет персональных инвестиционных, торговых, налоговых или юридических советов. Все результаты (P&amp;L, греки, алерты, цены) — лишь информационные оценки. Торговля опционами и другими деривативами связана с высоким риском убытков, вплоть до потери всего капитала. Вы несёте полную ответственность за свои решения. Перед торговлей проконсультируйтесь с лицензированным специалистом.</p>
+    </div>
+
+    <h2>1. Принятие условий</h2>
+    <p>Устанавливая или используя Приложение, вы соглашаетесь с настоящими Условиями. Если не согласны — не используйте Приложение.</p>
+
+    <h2>2. Что делает Приложение</h2>
+    <p>Приложение позволяет моделировать опционные позиции и стратегии, рассчитывать предполагаемые прибыль/убыток и греки, просматривать рыночные данные из публичных API бирж и опционально получать уведомления о ценах. С вашими API-ключами оно может считывать ваши позиции и рыночные данные напрямую с биржи для отображения и расчёта. Оно не размещает, не изменяет и не отменяет ордера.</p>
+
+    <h2>3. Отсутствие советов; ваша ответственность</h2>
+    <p>Ничто в Приложении не является финансовым, инвестиционным, торговым, налоговым или юридическим советом либо рекомендацией покупать или продавать какой-либо инструмент. Расчёты являются оценками и могут содержать ошибки, задержки или неточности, в том числе из-за сторонних данных. Вы принимаете на себя полную ответственность и риск за любые решения и действия на основе Приложения.</p>
+
+    <h2>4. API-ключи бирж</h2>
+    <p>Вы отвечаете за безопасность и уровень прав вводимых API-ключей. Рекомендуем ключи только для чтения (read-only). Приложение хранит ключи в зашифрованном виде только на вашем устройстве. Вы отвечаете за соблюдение условий использования подключаемых бирж.</p>
+
+    <h2>5. Точность и доступность</h2>
+    <p>Рыночные данные поступают из сторонних публичных API и могут быть задержанными, неполными или недоступными. Мы не гарантируем точность, своевременность или непрерывную доступность Приложения и данных.</p>
+
+    <h2>6. Подписки и платежи</h2>
+    <p>Приложение может предлагать бесплатный тариф и опциональную платную подписку (с пробным периодом). Подписки, при их включении, оплачиваются через Google Play Billing по условиям Google. Управление и отмена — в вашем аккаунте Google Play. Детали пробного периода и цены показаны в Приложении и листинге магазина.</p>
+
+    <h2>7. Допустимое использование</h2>
+    <p>Вы обязуетесь не злоупотреблять Приложением, не реверс-инжинирить его во вредоносных целях и не использовать для противоправной деятельности.</p>
+
+    <h2>8. Отказ от гарантий</h2>
+    <p>Приложение предоставляется «как есть» и «как доступно», без каких-либо гарантий, явных или подразумеваемых, включая товарную пригодность, пригодность для конкретной цели и ненарушение прав.</p>
+
+    <h2>9. Ограничение ответственности</h2>
+    <p>В максимально допустимой законом степени разработчик не несёт ответственности за торговые убытки и любой прямой, косвенный, случайный, специальный или последующий ущерб, возникший в связи с использованием или невозможностью использования Приложения или его данных.</p>
+
+    <h2>10. Изменения и прекращение</h2>
+    <p>Мы можем в любой момент изменять Условия или Приложение, прекращать работу функций. Продолжение использования после изменений означает их принятие.</p>
+
+    <h2>11. Контакт</h2>
+    <p>Losiev Iurii — <a href="mailto:yuriilosiev@gmail.com">yuriilosiev@gmail.com</a></p>
+  </div>
+</div>
+
+<script>
+function setLang(l){
+  document.querySelectorAll('[data-lang]').forEach(e=>e.classList.toggle('show', e.getAttribute('data-lang')===l));
+  document.getElementById('btn-en').classList.toggle('active', l==='en');
+  document.getElementById('btn-ru').classList.toggle('active', l==='ru');
+  document.documentElement.lang = l;
+}
+</script>
+</body>
+</html>

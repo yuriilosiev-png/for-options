@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Data Deletion — Options Analyst</title>
+<style>
+  :root { --bg:#0f1115; --card:#161922; --fg:#e6e8ec; --muted:#9aa0aa; --accent:#4f8cff; --border:#262b36; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.6 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; }
+  .wrap { max-width:760px; margin:0 auto; padding:24px 18px 80px; }
+  h1 { font-size:1.6rem; margin:.2em 0; }
+  h2 { font-size:1.1rem; margin:1.4em 0 .4em; border-bottom:1px solid var(--border); padding-bottom:.3em; }
+  a { color:var(--accent); }
+  .muted { color:var(--muted); font-size:.9rem; }
+  .lang-switch { position:sticky; top:0; background:var(--bg); padding:10px 0; display:flex; gap:8px; z-index:10; border-bottom:1px solid var(--border); }
+  .lang-switch button { background:var(--card); color:var(--fg); border:1px solid var(--border); border-radius:8px; padding:8px 16px; cursor:pointer; }
+  .lang-switch button.active { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .box { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px 18px; margin:14px 0; }
+  ol { padding-left:1.2em; }
+  [data-lang] { display:none; }
+  [data-lang].show { display:block; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="lang-switch">
+    <button id="btn-en" class="active" onclick="setLang('en')">English</button>
+    <button id="btn-ru" onclick="setLang('ru')">Русский</button>
+  </div>
+
+  <div data-lang="en" class="show">
+    <h1>Data Deletion Request</h1>
+    <p class="muted">App: Options Analyst &nbsp;·&nbsp; Last updated: June 4, 2026</p>
+
+    <div class="box">
+      <p><strong>Options Analyst does not require an account.</strong> Most of your data — exchange API keys, positions, strategies, alert settings — is stored <strong>only on your device</strong>. To delete it, uninstall the App or clear its data in your device settings.</p>
+    </div>
+
+    <h2>Data stored on our backend</h2>
+    <p>The only data we hold on a server is your Firebase Cloud Messaging (FCM) push token (and the price-alert conditions tied to it), used to deliver notifications. It does not identify you personally.</p>
+
+    <h2>How to delete it</h2>
+    <ol>
+      <li><strong>In-app:</strong> disable price alerts / notifications. This stops further use of the token.</li>
+      <li><strong>Full deletion request:</strong> email <a href="mailto:yuriilosiev@gmail.com">yuriilosiev@gmail.com</a> with the subject "Delete my data". We will remove the associated token and alert data from our backend.</li>
+    </ol>
+
+    <h2>Processing time and retention</h2>
+    <p>Requests are processed within 30 days. We do not retain backend data after deletion, except where required by law.</p>
+
+    <h2>Contact</h2>
+    <p>Losiev Iurii — <a href="mailto:yuriilosiev@gmail.com">yuriilosiev@gmail.com</a></p>
+  </div>
+
+  <div data-lang="ru">
+    <h1>Запрос на удаление данных</h1>
+    <p class="muted">Приложение: Options Analyst &nbsp;·&nbsp; Обновлено: 4 июня 2026</p>
+
+    <div class="box">
+      <p><strong>Options Analyst не требует аккаунта.</strong> Большая часть ваших данных — API-ключи бирж, позиции, стратегии, настройки алертов — хранится <strong>только на вашем устройстве</strong>. Чтобы удалить их, удалите Приложение или очистите его данные в настройках устройства.</p>
+    </div>
+
+    <h2>Данные на нашем бэкенде</h2>
+    <p>Единственное, что мы храним на сервере, — ваш push-токен Firebase Cloud Messaging (FCM) и привязанные к нему условия ценовых алертов, нужные для доставки уведомлений. Этот токен вас лично не идентифицирует.</p>
+
+    <h2>Как удалить</h2>
+    <ol>
+      <li><strong>В приложении:</strong> отключите ценовые алерты / уведомления. Это прекращает дальнейшее использование токена.</li>
+      <li><strong>Полное удаление:</strong> напишите на <a href="mailto:yuriilosiev@gmail.com">yuriilosiev@gmail.com</a> с темой «Удалить мои данные». Мы удалим связанный токен и данные алертов с бэкенда.</li>
+    </ol>
+
+    <h2>Сроки и хранение</h2>
+    <p>Запросы обрабатываются в течение 30 дней. После удаления мы не храним данные на бэкенде, кроме случаев, предусмотренных законом.</p>
+
+    <h2>Контакт</h2>
+    <p>Losiev Iurii — <a href="mailto:yuriilosiev@gmail.com">yuriilosiev@gmail.com</a></p>
+  </div>
+</div>
+
+<script>
+function setLang(l){
+  document.querySelectorAll('[data-lang]').forEach(e=>e.classList.toggle('show', e.getAttribute('data-lang')===l));
+  document.getElementById('btn-en').classList.toggle('active', l==='en');
+  document.getElementById('btn-ru').classList.toggle('active', l==='ru');
+  document.documentElement.lang = l;
+}
+</script>
+</body>
+</html>

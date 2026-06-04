@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privacy Policy — Options Analyst</title>
+<style>
+  :root { --bg:#0f1115; --card:#161922; --fg:#e6e8ec; --muted:#9aa0aa; --accent:#4f8cff; --border:#262b36; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.6 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; }
+  .wrap { max-width:820px; margin:0 auto; padding:24px 18px 80px; }
+  h1 { font-size:1.6rem; margin:.2em 0; }
+  h2 { font-size:1.15rem; margin:1.6em 0 .4em; border-bottom:1px solid var(--border); padding-bottom:.3em; }
+  h3 { font-size:1rem; margin:1.1em 0 .3em; color:var(--accent); }
+  p, li { color:var(--fg); }
+  .muted { color:var(--muted); font-size:.9rem; }
+  a { color:var(--accent); }
+  .lang-switch { position:sticky; top:0; background:var(--bg); padding:10px 0; display:flex; gap:8px; z-index:10; border-bottom:1px solid var(--border); }
+  .lang-switch button { background:var(--card); color:var(--fg); border:1px solid var(--border); border-radius:8px; padding:8px 16px; cursor:pointer; font-size:.95rem; }
+  .lang-switch button.active { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .box { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px 18px; margin:14px 0; }
+  table { width:100%; border-collapse:collapse; margin:10px 0; font-size:.92rem; }
+  th, td { border:1px solid var(--border); padding:8px 10px; text-align:left; vertical-align:top; }
+  th { background:var(--card); }
+  [data-lang] { display:none; }
+  [data-lang].show { display:block; }
+  code { background:#222733; padding:2px 6px; border-radius:5px; font-size:.88em; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="lang-switch">
+    <button id="btn-en" class="active" onclick="setLang('en')">English</button>
+    <button id="btn-ru" onclick="setLang('ru')">Русский</button>
+  </div>
+
+  <!-- ============ ENGLISH ============ -->
+  <div data-lang="en" class="show">
+    <h1>Privacy Policy</h1>
+    <p class="muted">App: Options Analyst &nbsp;·&nbsp; Last updated: June 4, 2026</p>
+
+    <div class="box">
+      <p>This Privacy Policy explains how <strong>Options Analyst</strong> (the "App") handles information. The App is a standalone analytical calculator for options positions. It is <strong>not a broker</strong>, does not execute trades, and does not provide personalized financial advice.</p>
+      <p><strong>Developer:</strong> Losiev Iurii<br>
+      <strong>Contact:</strong> <a href="mailto:yuriilosiev@gmail.com">yuriilosiev@gmail.com</a></p>
+    </div>
+
+    <h2>1. Summary</h2>
+    <ul>
+      <li>The App does <strong>not</strong> collect, store, or transmit personal identity data (name, address, etc.) to the developer.</li>
+      <li>Your exchange API keys are stored <strong>only on your device</strong>, encrypted, and are <strong>never</strong> sent to our servers.</li>
+      <li>For optional price-alert push notifications, a Firebase Cloud Messaging (FCM) token is stored on our backend (Cloudflare Worker KV). This token does not identify you personally.</li>
+      <li>Market prices are fetched directly from public exchange APIs.</li>
+    </ul>
+
+    <h2>2. What data the App processes</h2>
+    <table>
+      <tr><th>Data</th><th>Where it is stored</th><th>Purpose</th><th>Sent to developer?</th></tr>
+      <tr><td>Exchange API keys (Bybit / Deribit)</td><td>Your device only (browser localStorage, AES-GCM encrypted)</td><td>Fetch your positions and market data directly from the exchange</td><td>No</td></tr>
+      <tr><td>Position / strategy inputs you enter</td><td>Your device only (localStorage)</td><td>Calculate P&amp;L and Greeks</td><td>No</td></tr>
+      <tr><td>FCM push token</td><td>Our backend (Cloudflare Worker KV)</td><td>Deliver price-alert notifications you configure</td><td>Stored on backend, not shared with third parties</td></tr>
+      <tr><td>Price-alert settings</td><td>Your device + backend (for alert checks)</td><td>Trigger notifications when your price condition is met</td><td>Used only to send your own alerts</td></tr>
+      <tr><td>Market prices / options chains</td><td>Not stored persistently</td><td>Display and calculation</td><td>Fetched from public exchange APIs</td></tr>
+    </table>
+
+    <h2>3. Exchange API keys</h2>
+    <p>API keys you enter are encrypted with AES-GCM and kept in your device's local storage. They are used solely to call the exchange's own API from your device. The App enforces and warns about key permission levels (read-only is recommended). Keys are never transmitted to, logged by, or visible to the developer. If you uninstall the App or clear app data, the keys are removed.</p>
+
+    <h2>4. Push notifications and our backend</h2>
+    <p>If you enable price alerts, the App registers a Firebase Cloud Messaging (FCM) token. This token is stored on our backend hosted on Cloudflare (Worker KV) and is used only to send you the alerts you configured. We do not use it for advertising or analytics. You can disable alerts at any time; to delete your token from the backend, disable notifications and contact us at the email above to request deletion.</p>
+
+    <h2>5. Third-party services</h2>
+    <ul>
+      <li><strong>Firebase Cloud Messaging (Google)</strong> — push notification delivery. See Google's privacy policy.</li>
+      <li><strong>Cloudflare</strong> — backend hosting (Worker + KV storage) for alert checks and token storage.</li>
+      <li><strong>Bybit / Deribit public APIs</strong> — market data and, with your keys, your position data.</li>
+      <li><strong>Google Play Billing</strong> — if/when subscriptions are enabled, payments are processed by Google. We do not receive or store your payment card details.</li>
+    </ul>
+
+    <h2>6. Data retention and deletion</h2>
+    <p>Data stored on your device persists until you clear it or uninstall the App. The FCM token on our backend is retained while alerts are active and removed on disable or upon a deletion request. To request deletion of any backend data, email <a href="mailto:yuriilosiev@gmail.com">yuriilosiev@gmail.com</a>.</p>
+
+    <h2>7. Children</h2>
+    <p>The App is not directed to children under 18 and is intended for adult users interested in derivatives analytics.</p>
+
+    <h2>8. Security</h2>
+    <p>API keys are encrypted on-device (AES-GCM). Backend communication uses HTTPS. No method of storage or transmission is 100% secure, but we apply reasonable measures to protect data.</p>
+
+    <h2>9. Changes</h2>
+    <p>We may update this policy. The "Last updated" date will reflect changes. Material changes will be reflected in the App listing.</p>
+
+    <h2>10. Contact</h2>
+    <p>Questions or data-deletion requests: <a href="mailto:yuriilosiev@gmail.com">yuriilosiev@gmail.com</a></p>
+  </div>
+
+  <!-- ============ RUSSIAN ============ -->
+  <div data-lang="ru">
+    <h1>Политика конфиденциальности</h1>
+    <p class="muted">Приложение: Options Analyst &nbsp;·&nbsp; Обновлено: 4 июня 2026</p>
+
+    <div class="box">
+      <p>Данная Политика объясняет, как приложение <strong>Options Analyst</strong> («Приложение») обрабатывает информацию. Приложение — это автономный аналитический калькулятор опционных позиций. Оно <strong>не является брокером</strong>, не совершает сделок и не предоставляет персональных финансовых советов.</p>
+      <p><strong>Разработчик:</strong> Losiev Iurii<br>
+      <strong>Контакт:</strong> <a href="mailto:yuriilosiev@gmail.com">yuriilosiev@gmail.com</a></p>
+    </div>
+
+    <h2>1. Кратко</h2>
+    <ul>
+      <li>Приложение <strong>не</strong> собирает и не передаёт разработчику персональные данные (имя, адрес и т.п.).</li>
+      <li>Ваши API-ключи бирж хранятся <strong>только на вашем устройстве</strong> в зашифрованном виде и <strong>никогда</strong> не отправляются на наши серверы.</li>
+      <li>Для опциональных push-уведомлений о ценах токен Firebase Cloud Messaging (FCM) хранится на нашем бэкенде (Cloudflare Worker KV). Этот токен вас лично не идентифицирует.</li>
+      <li>Рыночные цены берутся напрямую из публичных API бирж.</li>
+    </ul>
+
+    <h2>2. Какие данные обрабатывает Приложение</h2>
+    <table>
+      <tr><th>Данные</th><th>Где хранятся</th><th>Цель</th><th>Передаются разработчику?</th></tr>
+      <tr><td>API-ключи бирж (Bybit / Deribit)</td><td>Только на устройстве (localStorage, шифрование AES-GCM)</td><td>Получение позиций и рыночных данных напрямую с биржи</td><td>Нет</td></tr>
+      <tr><td>Введённые вами позиции / стратегии</td><td>Только на устройстве (localStorage)</td><td>Расчёт P&amp;L и греков</td><td>Нет</td></tr>
+      <tr><td>FCM push-токен</td><td>Наш бэкенд (Cloudflare Worker KV)</td><td>Доставка настроенных вами уведомлений о ценах</td><td>Хранится на бэкенде, третьим лицам не передаётся</td></tr>
+      <tr><td>Настройки ценовых алертов</td><td>Устройство + бэкенд (для проверки)</td><td>Срабатывание уведомлений при выполнении условия по цене</td><td>Используются только для ваших алертов</td></tr>
+      <tr><td>Рыночные цены / цепочки опционов</td><td>Постоянно не хранятся</td><td>Отображение и расчёт</td><td>Берутся из публичных API бирж</td></tr>
+    </table>
+
+    <h2>3. API-ключи бирж</h2>
+    <p>Введённые вами ключи шифруются алгоритмом AES-GCM и хранятся в локальном хранилище устройства. Они используются исключительно для обращений к API биржи с вашего устройства. Приложение проверяет и предупреждает об уровне прав ключа (рекомендуется read-only). Ключи никогда не передаются разработчику, не логируются и ему не видны. При удалении приложения или очистке данных ключи удаляются.</p>
+
+    <h2>4. Push-уведомления и наш бэкенд</h2>
+    <p>Если вы включаете ценовые алерты, Приложение регистрирует токен Firebase Cloud Messaging (FCM). Этот токен хранится на нашем бэкенде на Cloudflare (Worker KV) и используется только для отправки настроенных вами уведомлений. Мы не используем его для рекламы или аналитики. Вы можете отключить алерты в любой момент; для удаления токена с бэкенда отключите уведомления и напишите нам на email выше.</p>
+
+    <h2>5. Сторонние сервисы</h2>
+    <ul>
+      <li><strong>Firebase Cloud Messaging (Google)</strong> — доставка push-уведомлений. См. политику конфиденциальности Google.</li>
+      <li><strong>Cloudflare</strong> — хостинг бэкенда (Worker + KV) для проверки алертов и хранения токена.</li>
+      <li><strong>Публичные API Bybit / Deribit</strong> — рыночные данные и, с вашими ключами, данные ваших позиций.</li>
+      <li><strong>Google Play Billing</strong> — при включении подписок платежи обрабатывает Google. Мы не получаем и не храним данные вашей карты.</li>
+    </ul>
+
+    <h2>6. Хранение и удаление данных</h2>
+    <p>Данные на устройстве хранятся до их очистки или удаления Приложения. FCM-токен на бэкенде хранится, пока активны алерты, и удаляется при отключении или по запросу. Для удаления любых данных с бэкенда напишите на <a href="mailto:yuriilosiev@gmail.com">yuriilosiev@gmail.com</a>.</p>
+
+    <h2>7. Дети</h2>
+    <p>Приложение не предназначено для лиц младше 18 лет и рассчитано на взрослых пользователей, интересующихся аналитикой деривативов.</p>
+
+    <h2>8. Безопасность</h2>
+    <p>API-ключи шифруются на устройстве (AES-GCM). Связь с бэкендом — по HTTPS. Ни один способ хранения или передачи не является на 100% безопасным, но мы применяем разумные меры защиты.</p>
+
+    <h2>9. Изменения</h2>
+    <p>Мы можем обновлять данную Политику. Дата «Обновлено» отражает изменения. Существенные изменения будут отражены в листинге Приложения.</p>
+
+    <h2>10. Контакт</h2>
+    <p>Вопросы или запросы на удаление данных: <a href="mailto:yuriilosiev@gmail.com">yuriilosiev@gmail.com</a></p>
+  </div>
+</div>
+
+<script>
+function setLang(l){
+  document.querySelectorAll('[data-lang]').forEach(e=>e.classList.toggle('show', e.getAttribute('data-lang')===l));
+  document.getElementById('btn-en').classList.toggle('active', l==='en');
+  document.getElementById('btn-ru').classList.toggle('active', l==='ru');
+  document.documentElement.lang = l;
+}
+</script>
+</body>
+</html>
