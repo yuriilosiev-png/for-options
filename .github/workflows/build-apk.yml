@@ -1,32 +1,58 @@
-android {
-    compileSdkVersion 33
-    defaultConfig {
-        applicationId "com.options.analyst"
-        minSdkVersion 24
-        targetSdkVersion 33
-        versionCode 10
-        versionName "2.0"
-    }
-    signingConfigs {
-        release {
-            storeFile file(System.getenv("KEYSTORE_PATH") ?: "options-analyst.jks")
-            storePassword System.getenv("STORE_PASSWORD") ?: ""
-            keyAlias System.getenv("KEY_ALIAS") ?: "options-analyst"
-            keyPassword System.getenv("KEY_PASSWORD") ?: ""
-        }
-    }
-    buildTypes {
-        release {
-            minifyEnabled false
-            signingConfig signingConfigs.release
-        }
-        debug { minifyEnabled false }
-    }
-    sourceSets {
-        main { res.srcDirs = ['src/main/res'] }
-    }
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
-    }
-}
+name: Build APK
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'app/**'
+      - 'build.gradle'
+      - 'settings.gradle'
+      - '.github/workflows/build-apk.yml'
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Install Gradle 7.5
+        run: |
+          wget -q https://services.gradle.org/distributions/gradle-7.5-bin.zip -O /tmp/gradle.zip
+          unzip -q /tmp/gradle.zip -d /opt/gradle
+          echo "/opt/gradle/gradle-7.5/bin" >> $GITHUB_PATH
+      - name: Decode google-services.json
+        run: echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 -d > app/google-services.json
+      - name: Decode keystore
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > app/options-analyst.jks
+      - name: Copy icons to app res
+        run: |
+          mkdir -p app/src/main/res/mipmap-hdpi
+          mkdir -p app/src/main/res/mipmap-xhdpi
+          mkdir -p app/src/main/res/mipmap-xxhdpi
+          mkdir -p app/src/main/res/mipmap-xxxhdpi
+          cp icon-192.png app/src/main/res/mipmap-hdpi/ic_launcher.png
+          cp icon-192.png app/src/main/res/mipmap-xhdpi/ic_launcher.png
+          cp icon-512.png app/src/main/res/mipmap-xxhdpi/ic_launcher.png
+          cp icon-512.png app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
+      - name: Build release APK
+        run: gradle assembleRelease --no-daemon
+        env:
+          ANDROID_HOME: /usr/local/lib/android/sdk
+          KEYSTORE_PATH: options-analyst.jks
+          KEY_ALIAS: options-analyst
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+      - name: Find APK
+        run: find . -name "*.apk" 2>/dev/null || echo "No APK found"
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: OptionsAnalyst-v2.0-release
+          path: "**/*release*.apk"
+          retention-days: 30
