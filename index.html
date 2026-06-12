@@ -5832,6 +5832,14 @@ function playAlertSound() {
 // ── Запускаем таймер проверки (каждые 3 сек) ──
 function startAlertTimer() {
   if (_alertCheckTimer) return;
+  // В APK (WebView) НЕ запускаем локальную проверку — она глушит FCM push.
+  // Локальный таймер срабатывает первым (каждые 3 сек) и помечает алерт triggered,
+  // из-за чего Worker пропускает его и не шлёт FCM баннер в фоне/Doze.
+  // В APK полагаемся только на FCM от Worker.
+  if (isWebView()) {
+    console.log('[Alerts] APK: локальная проверка отключена, используется FCM');
+    return;
+  }
   _alertCheckTimer = setInterval(() => {
     if (S.spotPrice > 0) checkPriceAlerts(S.spotPrice);
   }, 3000);
