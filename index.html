@@ -5714,8 +5714,12 @@ function saveAlert() {
   _registerPeriodicSync();
   // Push-подписка: если ещё не подписан — запускаем полный флоу (запросит разрешение)
   // Если уже подписан — просто синхронизируем новый алерт на Worker
-  if (!WORKER_URL.includes('YOUR_SUBDOMAIN')) {
-    if (!_pushSubId || Notification.permission !== 'granted') {
+ if (!WORKER_URL.includes('YOUR_SUBDOMAIN')) {
+    if (isWebView()) {
+      // APK: всегда синхронизируем FCM алерты после сохранения
+      _syncAlertsToWorker();
+      if (!_fcmSubId) subscribeToPush();
+    } else if (!_pushSubId || Notification.permission !== 'granted') {
       subscribeToPush(); // запросит разрешение + зарегистрирует подписку
     } else {
       _syncAlertsToWorker();
@@ -5724,6 +5728,7 @@ function saveAlert() {
     // Worker не настроен — просто запрашиваем разрешение для browser notifications
     Notification.requestPermission();
   }
+  
 }
 
 function deleteAlert(id) {
