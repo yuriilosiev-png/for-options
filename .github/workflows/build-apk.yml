@@ -1,4 +1,4 @@
-name: Build AAB
+name: Build APK + AAB
 on:
   push:
     branches: [ main ]
@@ -8,40 +8,32 @@ on:
       - 'settings.gradle'
       - '.github/workflows/build-apk.yml'
   workflow_dispatch:
-
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
-
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
-
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
-
       - name: Install Android SDK platform 35
         run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
         env:
           ANDROID_HOME: /usr/local/lib/android/sdk
-
       - name: Install Gradle 8.4
         run: |
           wget -q https://services.gradle.org/distributions/gradle-8.4-bin.zip -O /tmp/gradle.zip
           unzip -q /tmp/gradle.zip -d /opt/gradle
           echo "/opt/gradle/gradle-8.4/bin" >> $GITHUB_PATH
-
       - name: Decode google-services.json
         run: echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 -d > app/google-services.json
-
       - name: Decode keystore
         run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > app/options-analyst.jks
-
       - name: Copy icons to app res
         run: |
           mkdir -p app/src/main/res/mipmap-hdpi
@@ -52,7 +44,16 @@ jobs:
           cp icon-192.png app/src/main/res/mipmap-xhdpi/ic_launcher.png
           cp icon-512.png app/src/main/res/mipmap-xxhdpi/ic_launcher.png
           cp icon-512.png app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
-
+      # APK — для прямой установки на телефон (быстрый тест)
+      - name: Build release APK
+        run: gradle assembleRelease --no-daemon
+        env:
+          ANDROID_HOME: /usr/local/lib/android/sdk
+          KEYSTORE_PATH: options-analyst.jks
+          KEY_ALIAS: options-analyst
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+      # AAB — для загрузки в Google Play
       - name: Build release AAB
         run: gradle bundleRelease --no-daemon
         env:
@@ -61,13 +62,23 @@ jobs:
           KEY_ALIAS: options-analyst
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
-
-      - name: Find AAB
-        run: find . -name "*.aab" 2>/dev/null || echo "No AAB found"
-
+      - name: Find artifacts
+        run: |
+          echo "=== APK ==="
+          find . -name "*.apk" 2>/dev/null || echo "No APK found"
+          echo "=== AAB ==="
+          find . -name "*.aab" 2>/dev/null || echo "No AAB found"
+      # Загружаем APK отдельным артефактом — его ставим на телефон
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: OptionsAnalyst-APK
+          path: "**/*release*.apk"
+          retention-days: 30
+      # Загружаем AAB отдельным артефактом — его льём в Play Console
       - name: Upload AAB
         uses: actions/upload-artifact@v4
         with:
-          name: OptionsAnalyst-v2.0-release
+          name: OptionsAnalyst-AAB
           path: "**/*release*.aab"
           retention-days: 30
