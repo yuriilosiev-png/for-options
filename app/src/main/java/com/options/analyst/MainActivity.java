@@ -240,7 +240,7 @@ public class MainActivity extends Activity {
          */
         @JavascriptInterface
         public String getVersion() {
-            return "2.0";
+            return "2.1";
         }
 
         /**
@@ -327,6 +327,11 @@ public class MainActivity extends Activity {
     // ─────────────────────────────────────────────────────────────────
     // v06 пункт 4: сброс бейджа при открытии приложения.
     // Обнуляем счётчик непрочитанных и гасим MIUI-бейдж.
+    //
+    // БАГ-ФИКС (баг 5): УБРАН nm.cancelAll(). Раньше он стирал ВСЕ уведомления
+    // из шторки при открытии приложения — если push пришёл пока приложение было
+    // свёрнуто, юзер открывал его и баннер исчезал до того как успел прочитать.
+    // Теперь только обнуляем бейдж-счётчик, уведомления в шторке остаются.
     // ─────────────────────────────────────────────────────────────────
     private void clearAppBadge() {
         // Сбрасываем счётчик в SharedPreferences
@@ -342,9 +347,8 @@ public class MainActivity extends Activity {
             badge.putExtra("android.intent.extra.update_application_message_text", "");
             sendBroadcast(badge);
         } catch (Throwable ignored) {}
-        // Снимаем все активные уведомления из шторки
-        NotificationManager nm = getSystemService(NotificationManager.class);
-        if (nm != null) nm.cancelAll();
+        // nm.cancelAll() УБРАН намеренно (см. комментарий выше) — не стираем
+        // уведомления из шторки, иначе пропадают непрочитанные пуши при открытии.
     }
 
     @Override
@@ -358,7 +362,7 @@ public class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         webView.onResume();
-        // v06 пункт 4: открыли приложение — гасим бейдж и уведомления
+        // v06 пункт 4: открыли приложение — гасим бейдж (но НЕ стираем уведомления)
         clearAppBadge();
         getWindow().getDecorView().setSystemUiVisibility(
             View.SYSTEM_UI_FLAG_FULLSCREEN |
