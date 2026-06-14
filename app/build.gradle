@@ -7,11 +7,8 @@ android {
         applicationId "com.options.analyst"
         minSdkVersion 24
         targetSdkVersion 35
-        // versionCode авто из номера сборки GitHub Actions (GITHUB_RUN_NUMBER).
-        // Каждый запуск даёт уникальный растущий номер — руками менять НЕ нужно.
-        // Локально (без Actions) fallback = 1.
-        versionCode (System.getenv("GITHUB_RUN_NUMBER") ?: "1").toInteger()
-        versionName "2.0"
+        versionCode 12
+        versionName "2.1"
     }
     signingConfigs {
         release {
