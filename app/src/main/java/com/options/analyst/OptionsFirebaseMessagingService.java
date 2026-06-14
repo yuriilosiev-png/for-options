@@ -45,8 +45,10 @@ public class OptionsFirebaseMessagingService extends FirebaseMessagingService {
     public  static final String KEY_PENDING= "fcm_pending_send";
     // v06 пункт 4: счётчик непрочитанных уведомлений для бейджа на иконке
     public  static final String KEY_BADGE  = "fcm_badge_count";
-    // debug-маяк: последнее FCM-событие (время + стадия). Читается из HTML.
+    // debug-маяк: история последних FCM-событий (время + стадия), новые сверху. Читается из HTML.
     public  static final String KEY_DEBUG  = "fcm_debug_log";
+    // сколько строк истории хранить в маяке (диагностика фона: видеть последовательность срабатываний)
+    private static final int DEBUG_MAX_LINES = 8;
 
     private static final String CHANNEL_ID   = "price_alerts";
     private static final String CHANNEL_NAME = "Price Alerts";
@@ -146,16 +148,37 @@ public class OptionsFirebaseMessagingService extends FirebaseMessagingService {
 
     // ─────────────────────────────────────────────────────────────────
     // debug-маяк: пишет строку "ЧЧ:ММ:СС | msg" в SharedPreferences.
+    // ИСТОРИЯ: хранит последние DEBUG_MAX_LINES событий, новые сверху, разделитель \n.
+    // Это критично для диагностики фона: одно перезаписываемое значение терялось бы,
+    // если на открытии приложения прилетало queued-сообщение и затирало строку,
+    // которую сервис записал ещё в замороженном состоянии. С историей строка
+    // фонового срабатывания (fg=false со временем cron-тика) остаётся видна.
     // Читается из HTML (для диагностики без adb/chrome://inspect).
     // ─────────────────────────────────────────────────────────────────
     private void dbg(String msg) {
         try {
             String ts = new java.text.SimpleDateFormat("HH:mm:ss")
                 .format(new java.util.Date());
-            getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-                .edit()
-                .putString(KEY_DEBUG, ts + " | " + msg)
-                .apply();
+            String line = ts + " | " + msg;
+
+            SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+            String prev = prefs.getString(KEY_DEBUG, "");
+
+            // новые строки сверху
+            String combined = prev.isEmpty() ? line : (line + "\n" + prev);
+
+            // обрезаем до последних DEBUG_MAX_LINES строк
+            String[] parts = combined.split("\n");
+            if (parts.length > DEBUG_MAX_LINES) {
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < DEBUG_MAX_LINES; i++) {
+                    if (i > 0) sb.append("\n");
+                    sb.append(parts[i]);
+                }
+                combined = sb.toString();
+            }
+
+            prefs.edit().putString(KEY_DEBUG, combined).apply();
         } catch (Throwable ignored) {}
     }
 
