@@ -89,7 +89,11 @@ public class MainActivity extends Activity {
         settings.setDomStorageEnabled(true);
         settings.setDatabaseEnabled(true);
         settings.setCacheMode(WebSettings.LOAD_DEFAULT);
-        settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+        // ИСПРАВЛЕНО (Device and Network Abuse): было MIXED_CONTENT_ALWAYS_ALLOW.
+        // Весь контент (GitHub Pages, Cloudflare Worker) идёт по HTTPS, поэтому
+        // mixed content не нужен. NEVER_ALLOW закрывает потенциальный второй флаг.
+        // Если что-то перестанет грузиться — заменить на MIXED_CONTENT_COMPATIBILITY_MODE.
+        settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
         settings.setAllowFileAccess(true);
         settings.setAllowContentAccess(true);
         settings.setBuiltInZoomControls(false);
@@ -110,7 +114,12 @@ public class MainActivity extends Activity {
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
-                handler.proceed();
+                // ИСПРАВЛЕНО (Device and Network Abuse — unsafe SSL handler):
+                // было handler.proceed() — приложение принимало ЛЮБОЙ сертификат,
+                // включая поддельный (дыра для man-in-the-middle). Теперь отклоняем
+                // небезопасные соединения. GitHub Pages и Cloudflare отдают валидные
+                // сертификаты, поэтому легитимная загрузка не страдает.
+                handler.cancel();
             }
             @Override
             public void onPageFinished(WebView view, String url) {
