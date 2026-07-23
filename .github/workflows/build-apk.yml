@@ -76,3 +76,14 @@ jobs:
       # Загружаем APK отдельным артефактом — его ставим на телефон
       - name: Upload APK
         uses: actions/upload-artifact@v4
+        with:
+          name: OptionsAnalyst-APK
+          path: "**/*release*.apk"
+          retention-days: 30
+      # Загружаем AAB отдельным артефактом — его льём в Play Console
+      - name: Upload AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: OptionsAnalyst-AAB
+          path: "**/*release*.aab"
+          retention-days: 30
