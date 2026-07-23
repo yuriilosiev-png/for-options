@@ -5,6 +5,7 @@ on:
     paths:
       - 'app/**'
       - 'build.gradle'
+      - 'gradle.properties'
       - 'settings.gradle'
       - '.github/workflows/build-apk.yml'
   workflow_dispatch:
@@ -34,6 +35,10 @@ jobs:
         run: echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 -d > app/google-services.json
       - name: Decode keystore
         run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > app/options-analyst.jks
+      - name: Verify keystore exists
+        run: |
+          ls -la app/options-analyst.jks
+          echo "Keystore size: $(stat -c%s app/options-analyst.jks) bytes"
       - name: Copy icons to app res
         run: |
           mkdir -p app/src/main/res/mipmap-hdpi
@@ -49,7 +54,7 @@ jobs:
         run: gradle assembleRelease --no-daemon
         env:
           ANDROID_HOME: /usr/local/lib/android/sdk
-          KEYSTORE_PATH: options-analyst.jks
+          KEYSTORE_PATH: ${{ github.workspace }}/app/options-analyst.jks
           KEY_ALIAS: options-analyst
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
@@ -58,7 +63,7 @@ jobs:
         run: gradle bundleRelease --no-daemon
         env:
           ANDROID_HOME: /usr/local/lib/android/sdk
-          KEYSTORE_PATH: options-analyst.jks
+          KEYSTORE_PATH: ${{ github.workspace }}/app/options-analyst.jks
           KEY_ALIAS: options-analyst
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
@@ -71,14 +76,3 @@ jobs:
       # Загружаем APK отдельным артефактом — его ставим на телефон
       - name: Upload APK
         uses: actions/upload-artifact@v4
-        with:
-          name: OptionsAnalyst-APK
-          path: "**/*release*.apk"
-          retention-days: 30
-      # Загружаем AAB отдельным артефактом — его льём в Play Console
-      - name: Upload AAB
-        uses: actions/upload-artifact@v4
-        with:
-          name: OptionsAnalyst-AAB
-          path: "**/*release*.aab"
-          retention-days: 30
