@@ -1,36 +1,18 @@
-// app/build.gradle — настройки приложения Planner.
-//
-// ОТЛИЧИЯ ОТ for-options (Options Analyst):
-//   - namespace = com.planner.app, applicationId = com.losev.planner (com.planner.app занят в Play)
-//   - убран plugin 'com.google.gms.google-services' (Firebase не используем)
-//   - убраны зависимости firebase-bom и firebase-messaging
-//   - versionCode=2, versionName="1.1" (нативный бэкап: шаринг/сохранение/импорт)
-//   - versionCode=8, versionName="1.7" (релиз в Google Play: i18n RU/EN, фикс модалки
-//     настроек, кнопка закрытия, свои категории; specialUse subtype переведён на английский)
-//   - versionCode=9, versionName="1.7.1" (target API 36 — требование Play, дедлайн
-//     31.08.2026; фикс наезда заголовка на дату в шапке; опт-аут predictive back)
-// Тулчейн (compileSdk 36, minSdk 24, target 36, AGP 8.9.1, Gradle 8.11.1) — как в
-// рабочем билде Options Analyst, чтобы гарантированно собралось тем же CI.
 apply plugin: 'com.android.application'
-
+apply plugin: 'com.google.gms.google-services'
 android {
-    namespace "com.planner.app"
+    namespace "com.options.analyst"
     compileSdkVersion 36
     defaultConfig {
-        // applicationId — идентификатор в Google Play, необратим после публикации.
-        // com.planner.app оказался занят чужим приложением. namespace ниже остаётся
-        // прежним (это Java-пакет, Play его не видит) — Java-файлы трогать не нужно.
-        applicationId "com.losev.planner"
+        applicationId "com.options.analyst"
         minSdkVersion 24
         targetSdkVersion 36
-        versionCode 9
-        versionName "1.7.1"
+        versionCode 13
+        versionName "2.2"
     }
     signingConfigs {
         release {
-            // keystore и пароли приходят из env-переменных, которые задаёт workflow
-            // из GitHub Secrets. Имя файла по умолчанию — planner.jks.
-            storeFile file(System.getenv("KEYSTORE_PATH") ?: "planner.jks")
+            storeFile file(System.getenv("KEYSTORE_PATH") ?: "options-analyst.jks")
             storePassword System.getenv("STORE_PASSWORD")
             keyAlias System.getenv("KEY_ALIAS")
             keyPassword System.getenv("KEY_PASSWORD")
@@ -51,16 +33,14 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
 }
-
 configurations {
     all {
         exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7'
         exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8'
     }
 }
-
 dependencies {
-    // androidx.core нужен для ActivityCompat/ContextCompat (runtime-запрос
-    // POST_NOTIFICATIONS на Android 13+). Firebase-зависимости НЕ подключаем.
-    implementation 'androidx.core:core:1.10.1'
+    implementation platform('com.google.firebase:firebase-bom:32.7.4')
+    implementation 'com.google.firebase:firebase-messaging'
+    implementation 'androidx.core:core:1.13.1'
 }
