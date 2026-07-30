@@ -1,11 +1,7 @@
-// КОРНЕВОЙ build.gradle (в корне репозитория planner, рядом с settings.gradle).
+// КОРНЕВОЙ build.gradle (в корне репозитория, рядом с settings.gradle).
 // Задаёт версию Android Gradle Plugin и репозитории для всех модулей.
 // НЕ путать с app/build.gradle — там настройки самого приложения.
-//
-// ОТЛИЧИЕ ОТ for-options: убран google-services classpath (Firebase не используем).
 // AGP 8.9.1 — минимум для compileSdk 36 (Android 16). Требует Gradle 8.11.1+ и JDK 17.
-// Подняли с 8.1.0 ради требования Play «target API 36 до 31.08.2026».
-// Версия слово в слово как в рабочем билде Options Analyst (тот же тулчейн = гарантия сборки).
 buildscript {
     repositories {
         google()
@@ -13,9 +9,9 @@ buildscript {
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:8.9.1'
+        classpath 'com.google.gms:google-services:4.4.2'
     }
 }
-
 allprojects {
     repositories {
         google()
