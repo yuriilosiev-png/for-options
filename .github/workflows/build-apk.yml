@@ -7,6 +7,7 @@ on:
       - 'build.gradle'
       - 'gradle.properties'
       - 'settings.gradle'
+      - 'icon-*.png'
       - '.github/workflows/build-apk.yml'
   workflow_dispatch:
 jobs:
@@ -39,16 +40,32 @@ jobs:
         run: |
           ls -la app/options-analyst.jks
           echo "Keystore size: $(stat -c%s app/options-analyst.jks) bytes"
+      # Иконки: легаси (ic_launcher) + адаптивная (foreground/background + anydpi-v26)
       - name: Copy icons to app res
         run: |
-          mkdir -p app/src/main/res/mipmap-hdpi
-          mkdir -p app/src/main/res/mipmap-xhdpi
-          mkdir -p app/src/main/res/mipmap-xxhdpi
-          mkdir -p app/src/main/res/mipmap-xxxhdpi
-          cp icon-192.png app/src/main/res/mipmap-hdpi/ic_launcher.png
-          cp icon-192.png app/src/main/res/mipmap-xhdpi/ic_launcher.png
-          cp icon-512.png app/src/main/res/mipmap-xxhdpi/ic_launcher.png
-          cp icon-512.png app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
+          set -e
+          RES=app/src/main/res
+          for d in mdpi hdpi xhdpi xxhdpi xxxhdpi; do mkdir -p $RES/mipmap-$d; done
+          mkdir -p $RES/mipmap-anydpi-v26
+          cp icon-72.png  $RES/mipmap-mdpi/ic_launcher.png
+          cp icon-192.png $RES/mipmap-hdpi/ic_launcher.png
+          cp icon-192.png $RES/mipmap-xhdpi/ic_launcher.png
+          cp icon-512.png $RES/mipmap-xxhdpi/ic_launcher.png
+          cp icon-512.png $RES/mipmap-xxxhdpi/ic_launcher.png
+          for d in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
+            cp $RES/mipmap-$d/ic_launcher.png $RES/mipmap-$d/ic_launcher_round.png
+            cp icon-fg-432.png $RES/mipmap-$d/ic_launcher_foreground.png
+            cp icon-bg-432.png $RES/mipmap-$d/ic_launcher_background.png
+          done
+          printf '%s\n' \
+            '<?xml version="1.0" encoding="utf-8"?>' \
+            '<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">' \
+            '    <background android:drawable="@mipmap/ic_launcher_background"/>' \
+            '    <foreground android:drawable="@mipmap/ic_launcher_foreground"/>' \
+            '</adaptive-icon>' > $RES/mipmap-anydpi-v26/ic_launcher.xml
+          cp $RES/mipmap-anydpi-v26/ic_launcher.xml $RES/mipmap-anydpi-v26/ic_launcher_round.xml
+          echo "=== res tree ==="
+          find $RES -name "ic_launcher*" | sort
       # APK — для прямой установки на телефон (быстрый тест)
       - name: Build release APK
         run: gradle assembleRelease --no-daemon
