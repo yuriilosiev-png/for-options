@@ -1,7 +1,24 @@
-// OPTIONS ANALYZER — Service Worker v4.1
+// OPTIONS ANALYZER — Service Worker v5
 // v4.1 FIX: checkAlertsBackground() учитывает alert.exchange (Bybit/Deribit)
+//
+// v5 FIX: страница не обновлялась после заливки нового index.html.
+// Стратегия здесь и раньше была network-first, но fetch() внутри SW уважает
+// обычный HTTP-кэш, а GitHub Pages отдаёт index.html с max-age=600. Плюс в APK
+// стоит WebSettings.LOAD_DEFAULT. В итоге WebView до десяти минут отвечал из
+// своей копии, не спрашивая сервер, — новый код не доезжал до устройства.
+// Теперь HTML и manifest всегда запрашиваются мимо HTTP-кэша (cache:'reload').
 
-const CACHE_NAME = 'options-v4';
+const CACHE_VERSION = 5;
+const CACHE_NAME = 'options-v' + CACHE_VERSION;
+
+// v5: запрос, для которого свежесть важнее скорости — сама страница.
+// Картинки и прочую статику трогать не нужно, они версионируются именем файла.
+function isHtmlLike(request) {
+  if (request.mode === 'navigate') return true;
+  const u = request.url;
+  return u.endsWith('.html') || u.endsWith('/for-options/') ||
+         u.endsWith('manifest.json') || u.endsWith('sw.js');
+}
 const STATIC_ASSETS = [
   '/for-options/',
   '/for-options/index.html',
@@ -26,8 +43,14 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
   if (!event.request.url.startsWith('http')) return;
+
+  // v5: для страницы обходим HTTP-кэш. cache:'reload' заставляет пойти на сервер
+  // и заодно обновить сам HTTP-кэш, поэтому старая копия нигде не остаётся.
+  // При обрыве связи падаем в кэш, как и раньше, — офлайн не ломается.
+  const opts = isHtmlLike(event.request) ? { cache: 'reload' } : undefined;
+
   event.respondWith(
-    fetch(event.request)
+    fetch(event.request, opts)
       .then(res => {
         if (res.ok && event.request.url.includes('/for-options/')) {
           const clone = res.clone();
@@ -35,7 +58,7 @@ self.addEventListener('fetch', event => {
         }
         return res;
       })
-      .catch(() => caches.match(event.request))
+      .catch(() => caches.match(event.request).then(hit => hit || Response.error()))
   );
 });
 
@@ -223,6 +246,18 @@ self.addEventListener('message', async event => {
       }
     } catch(e) {
       console.warn('[SW] SYNC_ALERTS error:', e);
+    }
+  }
+
+  // v5: принудительный сброс кэша со страницы — на случай, когда нужно
+  // сбросить всё немедленно, не дожидаясь обновления самого SW.
+  if (event.data.type === 'CLEAR_CACHE') {
+    try {
+      const keys = await caches.keys();
+      await Promise.all(keys.map(k => caches.delete(k)));
+      event.source?.postMessage({ type: 'CACHE_CLEARED' });
+    } catch(e) {
+      console.warn('[SW] CLEAR_CACHE error:', e);
     }
   }
 
