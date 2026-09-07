@@ -1186,6 +1186,124 @@ input[type="range"] { touch-action: none; }
   background: none; border: none; color: var(--text3);
   cursor: pointer; font-size: 20px; padding: 0 2px; flex-shrink: 0; line-height: 1;
 }
+/* ─── v35: VOLATILITY STATS ─────────────────────────────────────── */
+#vol-btn {
+  width: 30px; height: 30px; border-radius: 7px;
+  background: var(--bg4); border: 1px solid var(--border2);
+  color: var(--text2); cursor: pointer; font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: all .2s;
+}
+#vol-btn:active { background: var(--purple); color: #fff; }
+
+#vol-modal {
+  position: fixed; inset: 0; z-index: 200;
+  background: var(--bg); display: flex; flex-direction: column;
+  opacity: 0; pointer-events: none; transition: opacity .2s;
+}
+#vol-modal.open { opacity: 1; pointer-events: all; }
+#vol-topbar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px; background: var(--bg2);
+  border-bottom: 1px solid var(--border); flex-shrink: 0; min-height: 48px;
+}
+#vol-topbar .v-title { font-size: 14px; font-weight: 700; color: var(--purple); flex: 1; }
+.v-btn {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: var(--bg4); border: 1px solid var(--border2);
+  color: var(--text2); cursor: pointer; font-size: 16px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.v-btn.refresh { color: var(--purple); }
+.v-btn.spinning { animation: spin 1s linear infinite; }
+
+#vol-body { flex: 1; overflow-y: auto; }
+#vol-loading {
+  display: flex; align-items: center; justify-content: center;
+  padding: 48px 16px; color: var(--text3); font-size: 13px;
+}
+#vol-error { padding: 20px 16px; color: var(--red); font-size: 12px; text-align: center; }
+
+#vol-verdict {
+  padding: 10px 12px; font-size: 12px; line-height: 1.5; color: var(--text2);
+  background: var(--bg3); border-bottom: 1px solid var(--border);
+}
+.vv-badge {
+  display: inline-block; padding: 2px 9px; border-radius: 12px;
+  font-weight: 700; font-size: 11px; margin-right: 7px;
+}
+.vv-low  { background: rgba(0,214,143,.16);  color: var(--green); }
+.vv-mid  { background: rgba(61,127,255,.16); color: var(--blue); }
+.vv-high { background: rgba(255,77,106,.16); color: var(--red); }
+.vv-na   { background: var(--bg4);           color: var(--text3); }
+
+#vol-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  background: var(--bg2); border-bottom: 1px solid var(--border);
+}
+.v-cell {
+  padding: 8px 10px; font-size: 10px;
+  border-right: 1px solid var(--border); border-bottom: 1px solid var(--border);
+}
+.v-cell:nth-child(3n) { border-right: none; }
+.v-cell:nth-last-child(-n+3) { border-bottom: none; }
+.v-lbl { color: var(--text3); margin-bottom: 3px; }
+.v-val { font-family: var(--font); font-size: 14px; font-weight: 700; color: var(--text); }
+.v-val.na { color: var(--text3); font-size: 11px; font-weight: 400; }
+.v-val.pos { color: var(--green); }
+.v-val.neg { color: var(--red); }
+.v-sub { color: var(--text3); font-size: 9px; margin-top: 2px; }
+
+#vol-chart-wrap {
+  height: 190px; position: relative; flex-shrink: 0;
+  background: var(--bg3); border-bottom: 1px solid var(--border);
+}
+#vol-canvas { width: 100%; height: 100%; display: block; }
+#vol-legend {
+  display: flex; gap: 16px; padding: 6px 12px; font-size: 10px;
+  color: var(--text2); background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+}
+#vol-legend i { display: inline-block; width: 12px; height: 2px; vertical-align: middle; margin-right: 5px; }
+#vol-note { padding: 10px 12px 20px; font-size: 10px; color: var(--text3); line-height: 1.55; }
+
+@media (orientation: portrait) {
+  #vol-btn { width: 26px; height: 26px; font-size: 13px; flex-shrink: 0; }
+}
+
+/* ─── v35: БАННЕР ПОДКЛЮЧЕНИЯ API + ИНСТРУКЦИЯ ─── */
+#api-banner .modal-sheet { border-top: 2px solid var(--accent); }
+#api-banner-text { font-size: 12px; color: var(--text2); line-height: 1.5; margin-bottom: 10px; }
+#api-banner-list { margin: 0 0 10px; padding-left: 18px; font-size: 12px; color: var(--text2); line-height: 1.6; }
+.ab-note {
+  font-size: 11px; color: var(--text3); line-height: 1.45;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 8px; padding: 8px 10px;
+}
+.ab-link {
+  display: block; margin-top: 12px; text-align: center;
+  font-size: 12px; color: var(--blue); cursor: pointer;
+  text-decoration: underline; padding: 6px;
+}
+.ab-link:active { color: var(--accent); }
+
+#api-guide-modal .modal-sheet { max-height: 88vh; }
+#guide-tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+.guide-tab {
+  flex: 1; padding: 7px 8px; text-align: center; cursor: pointer;
+  font-size: 12px; border-radius: 8px; border: 1px solid var(--border2);
+  background: var(--bg3); color: var(--text2);
+}
+.guide-tab.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 700; }
+#guide-steps { margin: 0 0 12px; padding-left: 20px; font-size: 12px; color: var(--text2); line-height: 1.6; }
+#guide-steps li { margin-bottom: 7px; }
+#guide-steps b { color: var(--text); }
+.guide-warn {
+  font-size: 11px; line-height: 1.5; color: var(--text2);
+  background: rgba(240,165,0,.10); border: 1px solid rgba(240,165,0,.35);
+  border-radius: 8px; padding: 8px 10px; margin-bottom: 10px;
+}
+
 </style>
 </head>
 <body>
@@ -1207,6 +1325,8 @@ input[type="range"] { touch-action: none; }
     </button>
     <button id="theme-btn" onclick="toggleTheme()" title="Сменить тему" data-i18n-title="t_theme">🌙</button>
     <button id="rotate-btn" onclick="toggleOrientation()" title="Повернуть экран" data-i18n-title="t_rotate">⟳</button>
+    <!-- v35: статистика волатильности -->
+    <button id="vol-btn" onclick="openVolModal()" title="Статистика волатильности" data-i18n-title="t_vol">📈</button>
     <button id="lang-toggle" class="exchange-btn" onclick="toggleLang()" title="Language / Язык" style="font-weight:700;min-width:34px">RU</button>
     <select id="asset-select" onchange="setAsset(this.value)">
       <optgroup label="Bybit &amp; Deribit">
@@ -1664,6 +1784,60 @@ input[type="range"] { touch-action: none; }
 </div><!-- app -->
 
 <!-- ─── HISTORY MODAL ─── -->
+<!-- ═══ v35: СТАТИСТИКА ВОЛАТИЛЬНОСТИ ═══ -->
+<div id="vol-modal">
+  <div id="vol-topbar">
+    <div class="v-title" id="vol-title">📈 Волатильность</div>
+    <button class="v-btn refresh" id="vol-refresh-btn" onclick="loadVolStats(true)" title="Обновить" data-i18n-title="vs_refresh">⟳</button>
+    <button class="v-btn" onclick="closeVolModal()">✕</button>
+  </div>
+  <div id="vol-body">
+    <div id="vol-loading" data-i18n="vs_loading">⏳ Загрузка рыночных данных…</div>
+    <div id="vol-error" style="display:none"></div>
+    <div id="vol-content" style="display:none">
+      <div id="vol-verdict"></div>
+      <div id="vol-grid">
+        <div class="v-cell">
+          <div class="v-lbl" data-i18n="vs_iv_now">Текущая IV (ATM)</div>
+          <div class="v-val" id="vs-iv-now">—</div>
+          <div class="v-sub" id="vs-iv-now-sub"></div>
+        </div>
+        <div class="v-cell">
+          <div class="v-lbl" data-i18n="vs_iv_rank">IV rank (1г)</div>
+          <div class="v-val" id="vs-iv-rank">—</div>
+          <div class="v-sub" id="vs-iv-rank-sub"></div>
+        </div>
+        <div class="v-cell">
+          <div class="v-lbl" data-i18n="vs_iv_pct">IV percentile (1г)</div>
+          <div class="v-val" id="vs-iv-pct">—</div>
+          <div class="v-sub" id="vs-iv-pct-sub"></div>
+        </div>
+        <div class="v-cell">
+          <div class="v-lbl" data-i18n="vs_hv">HV 30д</div>
+          <div class="v-val" id="vs-hv">—</div>
+          <div class="v-sub" id="vs-hv-sub"></div>
+        </div>
+        <div class="v-cell">
+          <div class="v-lbl" data-i18n="vs_hv_rank">HV rank (1г)</div>
+          <div class="v-val" id="vs-hv-rank">—</div>
+          <div class="v-sub" id="vs-hv-rank-sub"></div>
+        </div>
+        <div class="v-cell">
+          <div class="v-lbl" data-i18n="vs_spread">IV − HV</div>
+          <div class="v-val" id="vs-spread">—</div>
+          <div class="v-sub" id="vs-spread-sub"></div>
+        </div>
+      </div>
+      <div id="vol-chart-wrap"><canvas id="vol-canvas"></canvas></div>
+      <div id="vol-legend">
+        <span><i style="background:var(--purple)"></i><span data-i18n="vs_chart_iv">IV (DVOL)</span></span>
+        <span><i style="background:var(--blue)"></i><span data-i18n="vs_chart_hv">HV 30д</span></span>
+      </div>
+      <div id="vol-note" data-i18n="vs_note"></div>
+    </div>
+  </div>
+</div>
+
 <div id="history-modal">
   <div id="history-topbar">
     <div class="h-title" data-i18n="hist_title">📊 История P&amp;L</div>
@@ -1973,6 +2147,43 @@ input[type="range"] { touch-action: none; }
 </div>
 
 <!-- ─── CONNECT MODAL ─── -->
+<!-- ═══ v35: БАННЕР «ПОДКЛЮЧИТЕ API» ═══ -->
+<div class="modal-overlay" id="api-banner">
+  <div class="modal-sheet">
+    <div class="modal-title" data-i18n="ab_title">🔌 Подключите API биржи</div>
+    <div id="api-banner-text" data-i18n="ab_text"></div>
+    <ul id="api-banner-list">
+      <li data-i18n="ab_li1"></li>
+      <li data-i18n="ab_li2"></li>
+      <li data-i18n="ab_li3"></li>
+    </ul>
+    <div class="ab-note" data-i18n="ab_note"></div>
+    <div class="modal-btns">
+      <button class="modal-btn cancel" onclick="closeApiBanner()" data-i18n="ab_later">Позже</button>
+      <button class="modal-btn confirm" onclick="closeApiBanner(); openConnectModal();" data-i18n="ab_connect">Подключить</button>
+    </div>
+    <div class="ab-link" onclick="openApiGuide()" data-i18n="ab_howto"></div>
+  </div>
+</div>
+
+<!-- ═══ v35: ПОШАГОВАЯ ИНСТРУКЦИЯ ПО API-КЛЮЧАМ ═══ -->
+<div class="modal-overlay" id="api-guide-modal">
+  <div class="modal-sheet">
+    <div class="modal-title" data-i18n="ag_title">🔑 Как получить API-ключи</div>
+    <div id="guide-tabs">
+      <div class="guide-tab active" id="guide-tab-bybit" onclick="setGuideExchange('bybit')">Bybit</div>
+      <div class="guide-tab" id="guide-tab-deribit" onclick="setGuideExchange('deribit')">Deribit</div>
+    </div>
+    <div class="guide-warn" id="guide-warn"></div>
+    <ol id="guide-steps"></ol>
+    <div class="ab-note" data-i18n="ag_note"></div>
+    <div class="modal-btns">
+      <button class="modal-btn cancel" onclick="closeModal('api-guide-modal')" data-i18n="btn_close">Закрыть</button>
+      <button class="modal-btn confirm" onclick="closeModal('api-guide-modal'); openConnectModal();" data-i18n="ab_connect">Подключить</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="connect-modal">
   <div class="modal-sheet">
     <div class="modal-title" data-i18n="conn_title">🔌 Подключение к бирже</div>
@@ -1993,6 +2204,8 @@ input[type="range"] { touch-action: none; }
       <label for="testnet-cb" class="form-label" style="margin:0">Testnet</label>
     </div>
     <div id="connect-status" style="font-size:11px;color:var(--text3);margin-bottom:8px;min-height:16px"></div>
+    <!-- v35: ссылка на пошаговую инструкцию -->
+    <div class="ab-link" style="margin-top:0;margin-bottom:6px" onclick="openApiGuide()" data-i18n="ab_howto"></div>
     <!-- 🔐 v07: статус прав API-ключа (read-only enforce) -->
     <div id="key-perm-status" style="display:none;font-size:11px;line-height:1.4;margin-bottom:10px;padding:8px 10px;border-radius:8px;border:1px solid var(--border)"></div>
     <div class="modal-btns">
@@ -7036,6 +7249,543 @@ async function fetchMarketIV(asset, exchange) {
 
 
 // ═══════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════
+// v35: СТАТИСТИКА ВОЛАТИЛЬНОСТИ (IV rank / IV percentile / HV)
+//
+// Публичные эндпоинты, без ключей и без CORS-прокси — так же, как fetchSpotPrice.
+// Источники данных:
+//   IV-история  — Deribit DVOL: public/get_volatility_index_data, год свечей
+//   Текущая IV  — ATM-опцион из цепочки текущей биржи (Bybit/Deribit)
+//   HV          — считаем сами: дневные свечи Bybit /v5/market/kline, окно 30д
+//
+// Список поддерживаемых активов НЕ захардкожен. Биржи публикуют историю IV
+// не для всех тикеров, поэтому каждая метрика запрашивается независимо:
+// если источник не ответил, метрика показывается как «нет данных»,
+// остальные считаются. Проверка идёт в рантайме, а не по константе.
+// ═══════════════════════════════════════════════════
+
+const VOL_CACHE_KEY = 'oa-vol-cache';
+const VOL_CACHE_TTL = 60 * 60 * 1000;   // 1 час
+const VOL_HV_WINDOW = 30;               // окно расчёта HV, дней
+let _volState = null;                   // последний посчитанный результат
+let _volLoading = false;
+
+function _volCacheRead(key) {
+  try {
+    const all = JSON.parse(localStorage.getItem(VOL_CACHE_KEY) || '{}');
+    const rec = all[key];
+    if (rec && (Date.now() - rec.ts) < VOL_CACHE_TTL) return rec.data;
+  } catch(e) { /* нет кеша или он битый */ }
+  return null;
+}
+function _volCacheWrite(key, data) {
+  try {
+    const all = JSON.parse(localStorage.getItem(VOL_CACHE_KEY) || '{}');
+    all[key] = { ts: Date.now(), data };
+    localStorage.setItem(VOL_CACHE_KEY, JSON.stringify(all));
+  } catch(e) { /* квота localStorage переполнена */ }
+}
+
+// ── Deribit DVOL: год истории индекса волатильности ──
+// Набор допустимых resolution у Deribit со временем менялся, поэтому пробуем
+// по очереди и берём первый, который вернул данные.
+async function fetchDvolSeries(asset) {
+  const end = Date.now();
+  const start = end - 365 * 24 * 3600 * 1000;
+  const base = 'https://www.deribit.com/api/v2/public/get_volatility_index_data';
+  const resolutions = ['1D', '43200', '3600'];
+  for (let i = 0; i < resolutions.length; i++) {
+    try {
+      const url = base + '?currency=' + encodeURIComponent(asset) +
+        '&start_timestamp=' + start + '&end_timestamp=' + end +
+        '&resolution=' + resolutions[i];
+      const r = await fetch(url);
+      if (!r.ok) continue;
+      const j = await r.json();
+      const rows = j && j.result && j.result.data;
+      if (!Array.isArray(rows) || rows.length < 30) continue;
+      // Формат свечи: [timestamp, open, high, low, close]
+      let out = [];
+      let mx = 0;
+      for (let k = 0; k < rows.length; k++) {
+        const x = rows[k];
+        const c = parseFloat(x[4]), hi = parseFloat(x[2]), lo = parseFloat(x[3]);
+        if (!isFinite(c) || c <= 0) continue;
+        out.push({ ts: +x[0], high: isFinite(hi) ? hi : c, low: isFinite(lo) ? lo : c, close: c });
+        if (out[out.length-1].high > mx) mx = out[out.length-1].high;
+      }
+      if (out.length < 30) continue;
+      // Нормализация: индекс приходит в пунктах (65.3). Если пришли доли — в проценты.
+      if (mx < 5) out = out.map(function(x){
+        return { ts: x.ts, high: x.high*100, low: x.low*100, close: x.close*100 };
+      });
+      out.sort(function(a,b){ return a.ts - b.ts; });
+      return out;
+    } catch(e) { /* пробуем следующий resolution */ }
+  }
+  return null;
+}
+
+// ── Дневные свечи спота с Bybit (публичный эндпоинт) ──
+async function fetchDailyCloses(asset, limit) {
+  try {
+    const url = 'https://api.bybit.com/v5/market/kline?category=spot&symbol=' +
+      encodeURIComponent(asset + 'USDT') + '&interval=D&limit=' + (limit || 400);
+    const r = await fetch(url);
+    if (!r.ok) return null;
+    const j = await r.json();
+    const list = j && j.result && j.result.list;
+    if (!Array.isArray(list) || list.length < VOL_HV_WINDOW + 10) return null;
+    // Bybit отдаёт от новых к старым: [start, open, high, low, close, volume, turnover]
+    const out = [];
+    for (let i = 0; i < list.length; i++) {
+      const c = parseFloat(list[i][4]);
+      if (isFinite(c) && c > 0) out.push({ ts: +list[i][0], close: c });
+    }
+    out.sort(function(a,b){ return a.ts - b.ts; });
+    return out.length >= VOL_HV_WINDOW + 10 ? out : null;
+  } catch(e) { return null; }
+}
+
+// ── HV: скользящее стандартное отклонение лог-доходностей, годовая ──
+function calcHvSeries(closes, win) {
+  const lr = [];
+  for (let i = 1; i < closes.length; i++) {
+    lr.push({ ts: closes[i].ts, r: Math.log(closes[i].close / closes[i-1].close) });
+  }
+  const out = [];
+  for (let i = win - 1; i < lr.length; i++) {
+    let sum = 0;
+    for (let k = i - win + 1; k <= i; k++) sum += lr[k].r;
+    const mean = sum / win;
+    let acc = 0;
+    for (let k = i - win + 1; k <= i; k++) { const d = lr[k].r - mean; acc += d * d; }
+    const sd = Math.sqrt(acc / (win - 1));
+    out.push({ ts: lr[i].ts, hv: sd * Math.sqrt(365) * 100 });
+  }
+  return out;
+}
+
+// ── rank по годовому диапазону + percentile по доле периодов ниже ──
+function calcRankPct(closes, lows, highs, current) {
+  if (!closes || closes.length < 30 || !isFinite(current)) return null;
+  let lo = Infinity, hi = -Infinity, below = 0;
+  for (let i = 0; i < closes.length; i++) {
+    const l = lows ? lows[i] : closes[i];
+    const h = highs ? highs[i] : closes[i];
+    if (l < lo) lo = l;
+    if (h > hi) hi = h;
+    if (closes[i] <= current) below++;
+  }
+  return {
+    rank: (hi > lo) ? ((current - lo) / (hi - lo) * 100) : null,
+    pct:  below / closes.length * 100,
+    lo: lo, hi: hi
+  };
+}
+
+// ── Разбор имени опциона: ASSET-DDMMMYY-STRIKE-C|P ──
+function _volParseOptName(name) {
+  const p = String(name).split('-');
+  if (p.length < 4) return null;
+  const MON = {JAN:0,FEB:1,MAR:2,APR:3,MAY:4,JUN:5,JUL:6,AUG:7,SEP:8,OCT:9,NOV:10,DEC:11};
+  const m = /^(\d{1,2})([A-Z]{3})(\d{2})$/.exec(p[1]);
+  if (!m || MON[m[2]] === undefined) return null;
+  const strike = parseFloat(p[2]);
+  if (!isFinite(strike) || strike <= 0) return null;
+  return {
+    exp: Date.UTC(2000 + parseInt(m[3], 10), MON[m[2]], parseInt(m[1], 10), 8, 0, 0),
+    strike: strike,
+    cp: p[3]
+  };
+}
+
+// ── ATM IV: ближайшая экспирация не короче 7 дней, страйк ближе всех к споту ──
+function _volPickAtmIv(rows, spot) {
+  const now = Date.now();
+  const cand = [];
+  for (let i = 0; i < rows.length; i++) {
+    const iv = rows[i].iv;
+    if (!isFinite(iv) || iv <= 0) continue;
+    const p = _volParseOptName(rows[i].name);
+    if (!p) continue;
+    const dte = (p.exp - now) / 86400000;
+    if (dte < 7) continue;
+    cand.push({ exp: p.exp, strike: p.strike, iv: iv, dte: dte });
+  }
+  if (!cand.length) return null;
+  let bestExp = null;
+  for (let i = 0; i < cand.length; i++) if (bestExp === null || cand[i].exp < bestExp) bestExp = cand[i].exp;
+  const same = cand.filter(function(c){ return c.exp === bestExp; });
+  let bestD = Infinity;
+  for (let i = 0; i < same.length; i++) {
+    const d = Math.abs(same[i].strike - spot);
+    if (d < bestD) bestD = d;
+  }
+  const atm = same.filter(function(c){ return Math.abs(Math.abs(c.strike - spot) - bestD) < 1e-9; });
+  if (!atm.length) return null;
+  let sum = 0;
+  for (let i = 0; i < atm.length; i++) sum += atm[i].iv;
+  return { iv: sum / atm.length, dte: Math.round(atm[0].dte), strike: atm[0].strike };
+}
+
+// ── Текущая ATM IV из цепочки опционов ──
+// Отдельно от fetchMarketIV: там страйк округляется шагом 50, что не подходит
+// активам с ценой ниже доллара (DOGE, XRP, TRX). Здесь страйк берётся из цепочки.
+async function fetchAtmIvFromChain(asset, exchange) {
+  const spot = S.spotPrice;
+  if (!spot || !isFinite(spot) || spot <= 0) return null;
+  try {
+    if (exchange === 'deribit') {
+      const r = await fetch('https://www.deribit.com/api/v2/public/get_book_summary_by_currency?currency=' +
+        encodeURIComponent(asset) + '&kind=option');
+      if (!r.ok) return null;
+      const j = await r.json();
+      if (!Array.isArray(j.result)) return null;
+      // Deribit: mark_iv уже в процентах
+      return _volPickAtmIv(j.result.map(function(x){
+        return { name: x.instrument_name, iv: parseFloat(x.mark_iv) };
+      }), spot);
+    } else {
+      const r = await fetch('https://api.bybit.com/v5/market/tickers?category=option&baseCoin=' +
+        encodeURIComponent(asset));
+      if (!r.ok) return null;
+      const j = await r.json();
+      const list = j && j.result && j.result.list;
+      if (!Array.isArray(list)) return null;
+      // Bybit: markIv в долях (0.75 = 75%)
+      return _volPickAtmIv(list.map(function(x){
+        return { name: x.symbol, iv: parseFloat(x.markIv) * 100 };
+      }), spot);
+    }
+  } catch(e) {
+    console.warn('[vol] ATM IV:', e.message);
+    return null;
+  }
+}
+
+// ── Сбор всей статистики по активу ──
+async function computeVolStats(asset, exchange) {
+  const res = await Promise.all([
+    fetchDvolSeries(asset),
+    fetchDailyCloses(asset, 400),
+    fetchAtmIvFromChain(asset, exchange)
+  ]);
+  const dvol = res[0], closes = res[1], atm = res[2];
+
+  const out = { asset: asset, exchange: exchange, ts: Date.now() };
+
+  // IV rank / percentile по DVOL
+  if (dvol && dvol.length >= 30) {
+    const cl = dvol.map(function(x){ return x.close; });
+    const lo = dvol.map(function(x){ return x.low; });
+    const hi = dvol.map(function(x){ return x.high; });
+    const cur = cl[cl.length - 1];
+    const rp = calcRankPct(cl, lo, hi, cur);
+    out.dvolSeries = dvol;
+    out.dvolNow = cur;
+    out.ivRank = rp ? rp.rank : null;
+    out.ivPct = rp ? rp.pct : null;
+    out.ivLo = rp ? rp.lo : null;
+    out.ivHi = rp ? rp.hi : null;
+  }
+
+  // HV из свечей
+  if (closes) {
+    const hvs = calcHvSeries(closes, VOL_HV_WINDOW);
+    if (hvs.length >= 30) {
+      const vals = hvs.map(function(x){ return x.hv; });
+      const cur = vals[vals.length - 1];
+      const rp = calcRankPct(vals, null, null, cur);
+      out.hvSeries = hvs;
+      out.hvNow = cur;
+      out.hvRank = rp ? rp.rank : null;
+      out.hvPct = rp ? rp.pct : null;
+      out.hvLo = rp ? rp.lo : null;
+      out.hvHi = rp ? rp.hi : null;
+    }
+  }
+
+  // Текущая ATM IV и спред к HV
+  if (atm) {
+    out.ivNow = atm.iv;
+    out.ivDte = atm.dte;
+    out.ivStrike = atm.strike;
+    if (isFinite(out.hvNow)) out.spread = atm.iv - out.hvNow;
+  }
+  return out;
+}
+
+// ── Загрузка с кешем ──
+async function loadVolStats(force) {
+  if (_volLoading) return;
+  const asset = S.asset, exchange = S.exchange;
+  const key = exchange + ':' + asset;
+  const box = document.getElementById('vol-loading');
+  const err = document.getElementById('vol-error');
+  const cnt = document.getElementById('vol-content');
+  const btn = document.getElementById('vol-refresh-btn');
+
+  if (!force) {
+    const cached = _volCacheRead(key);
+    if (cached) { _volState = cached; renderVolStats(); return; }
+  }
+
+  _volLoading = true;
+  if (btn) btn.classList.add('spinning');
+  if (err) err.style.display = 'none';
+  if (cnt) cnt.style.display = 'none';
+  if (box) box.style.display = 'flex';
+
+  try {
+    const data = await computeVolStats(asset, exchange);
+    const hasAny = isFinite(data.ivNow) || isFinite(data.hvNow) || isFinite(data.dvolNow);
+    if (!hasAny) throw new Error(tr('vs_err'));
+    _volState = data;
+    _volCacheWrite(key, data);
+    renderVolStats();
+  } catch(e) {
+    if (box) box.style.display = 'none';
+    if (err) { err.style.display = 'block'; err.textContent = '\u26a0\ufe0f ' + (e.message || tr('vs_err')); }
+  } finally {
+    _volLoading = false;
+    if (btn) btn.classList.remove('spinning');
+  }
+}
+
+function _volFmt(v, d) {
+  return isFinite(v) ? v.toFixed(d === undefined ? 1 : d) : null;
+}
+function _volSetCell(id, subId, text, sub, cls) {
+  const el = document.getElementById(id);
+  if (el) {
+    el.textContent = text;
+    el.className = 'v-val' + (cls ? ' ' + cls : '');
+  }
+  const se = document.getElementById(subId);
+  if (se) se.textContent = sub || '';
+}
+
+function renderVolStats() {
+  const d = _volState;
+  if (!d) return;
+  const box = document.getElementById('vol-loading');
+  const cnt = document.getElementById('vol-content');
+  if (box) box.style.display = 'none';
+  if (cnt) cnt.style.display = 'block';
+
+  const title = document.getElementById('vol-title');
+  if (title) title.textContent = '\ud83d\udcc8 ' + tr('vs_title') + ' \u2014 ' + d.asset;
+
+  const na = tr('vs_na');
+
+  // Текущая IV
+  _volSetCell('vs-iv-now', 'vs-iv-now-sub',
+    isFinite(d.ivNow) ? _volFmt(d.ivNow) + '%' : na,
+    isFinite(d.ivNow) ? tr('vs_atm_sub', { d: d.ivDte }) : '',
+    isFinite(d.ivNow) ? '' : 'na');
+
+  // IV rank / percentile
+  _volSetCell('vs-iv-rank', 'vs-iv-rank-sub',
+    isFinite(d.ivRank) ? Math.round(d.ivRank) + '%' : na,
+    isFinite(d.ivLo) ? tr('vs_range', { lo: _volFmt(d.ivLo, 0), hi: _volFmt(d.ivHi, 0) }) : tr('vs_no_iv'),
+    isFinite(d.ivRank) ? '' : 'na');
+  _volSetCell('vs-iv-pct', 'vs-iv-pct-sub',
+    isFinite(d.ivPct) ? Math.round(d.ivPct) + '%' : na,
+    isFinite(d.dvolNow) ? 'DVOL ' + _volFmt(d.dvolNow) : '',
+    isFinite(d.ivPct) ? '' : 'na');
+
+  // HV
+  _volSetCell('vs-hv', 'vs-hv-sub',
+    isFinite(d.hvNow) ? _volFmt(d.hvNow) + '%' : na,
+    isFinite(d.hvNow) ? tr('vs_hv_sub') : '',
+    isFinite(d.hvNow) ? '' : 'na');
+  _volSetCell('vs-hv-rank', 'vs-hv-rank-sub',
+    isFinite(d.hvRank) ? Math.round(d.hvRank) + '%' : na,
+    isFinite(d.hvLo) ? tr('vs_range', { lo: _volFmt(d.hvLo, 0), hi: _volFmt(d.hvHi, 0) }) : '',
+    isFinite(d.hvRank) ? '' : 'na');
+
+  // Спред IV − HV
+  _volSetCell('vs-spread', 'vs-spread-sub',
+    isFinite(d.spread) ? (d.spread >= 0 ? '+' : '') + _volFmt(d.spread) + ' \u043f.\u043f.' : na,
+    isFinite(d.spread) ? tr('vs_spread_sub') : '',
+    isFinite(d.spread) ? (d.spread >= 0 ? 'pos' : 'neg') : 'na');
+
+  // Вердикт: описательный, без рекомендаций
+  const vd = document.getElementById('vol-verdict');
+  if (vd) {
+    let rank = null, basis = 'iv';
+    if (isFinite(d.ivRank)) { rank = d.ivRank; }
+    else if (isFinite(d.hvRank)) { rank = d.hvRank; basis = 'hv'; }
+    if (rank === null) {
+      vd.innerHTML = '<span class="vv-badge vv-na">' + tr('vs_na') + '</span>' + tr('vs_v_none');
+    } else {
+      const lvl = rank < 25 ? 'low' : (rank > 75 ? 'high' : 'mid');
+      const badge = tr(lvl === 'low' ? 'vs_low' : lvl === 'high' ? 'vs_high' : 'vs_mid');
+      let txt = tr(basis === 'iv'
+        ? (lvl === 'low' ? 'vs_v_iv_low' : lvl === 'high' ? 'vs_v_iv_high' : 'vs_v_iv_mid')
+        : (lvl === 'low' ? 'vs_v_hv_low' : lvl === 'high' ? 'vs_v_hv_high' : 'vs_v_hv_mid'),
+        { r: Math.round(rank) });
+      if (basis === 'hv') txt += ' ' + tr('vs_v_hv_basis', { a: d.asset });
+      vd.innerHTML = '<span class="vv-badge vv-' + lvl + '">' + badge + '</span>' + txt;
+    }
+  }
+
+  const note = document.getElementById('vol-note');
+  if (note) note.textContent = tr('vs_note');
+
+  drawVolChart();
+}
+
+// ── График: год IV (DVOL) и HV на общей оси, обе величины в % годовых ──
+function drawVolChart() {
+  const wrap = document.getElementById('vol-chart-wrap');
+  const cv = document.getElementById('vol-canvas');
+  const d = _volState;
+  if (!wrap || !cv || !d) return;
+  const w = wrap.clientWidth, h = wrap.clientHeight;
+  if (!w || !h) return;
+  const dpr = window.devicePixelRatio || 1;
+  cv.width = Math.round(w * dpr);
+  cv.height = Math.round(h * dpr);
+  const ctx = cv.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+
+  const cs = getComputedStyle(document.documentElement);
+  const cPurple = (cs.getPropertyValue('--purple') || '#a855f7').trim();
+  const cBlue   = (cs.getPropertyValue('--blue')   || '#3d7fff').trim();
+  const cGrid   = (cs.getPropertyValue('--border') || '#1e2840').trim();
+  const cText   = (cs.getPropertyValue('--text3')  || '#5a6585').trim();
+
+  const series = [];
+  if (d.dvolSeries && d.dvolSeries.length > 1)
+    series.push({ color: cPurple, pts: d.dvolSeries.map(function(x){ return { ts: x.ts, v: x.close }; }) });
+  if (d.hvSeries && d.hvSeries.length > 1)
+    series.push({ color: cBlue, pts: d.hvSeries.map(function(x){ return { ts: x.ts, v: x.hv }; }) });
+  if (!series.length) return;
+
+  const padL = 34, padR = 8, padT = 10, padB = 18;
+  let tMin = Infinity, tMax = -Infinity, vMin = Infinity, vMax = -Infinity;
+  for (let i = 0; i < series.length; i++) {
+    const pts = series[i].pts;
+    for (let k = 0; k < pts.length; k++) {
+      if (pts[k].ts < tMin) tMin = pts[k].ts;
+      if (pts[k].ts > tMax) tMax = pts[k].ts;
+      if (pts[k].v < vMin) vMin = pts[k].v;
+      if (pts[k].v > vMax) vMax = pts[k].v;
+    }
+  }
+  if (!(tMax > tMin) || !(vMax > vMin)) return;
+  const padV = (vMax - vMin) * 0.08;
+  vMin -= padV; vMax += padV;
+
+  const X = function(ts){ return padL + (ts - tMin) / (tMax - tMin) * (w - padL - padR); };
+  const Y = function(v){ return padT + (1 - (v - vMin) / (vMax - vMin)) * (h - padT - padB); };
+
+  // сетка и подписи оси
+  ctx.strokeStyle = cGrid; ctx.lineWidth = 1;
+  ctx.fillStyle = cText; ctx.font = '9px ' + (cs.getPropertyValue('--font') || 'monospace').trim();
+  ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  for (let i = 0; i <= 3; i++) {
+    const v = vMin + (vMax - vMin) * i / 3;
+    const y = Y(v);
+    ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(w - padR, y); ctx.stroke();
+    ctx.fillText(Math.round(v) + '%', padL - 4, y);
+  }
+
+  // линии
+  for (let i = 0; i < series.length; i++) {
+    const pts = series[i].pts;
+    ctx.strokeStyle = series[i].color;
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    for (let k = 0; k < pts.length; k++) {
+      const x = X(pts[k].ts), y = Y(pts[k].v);
+      if (k === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+
+  // подписи дат по краям
+  ctx.fillStyle = cText; ctx.textBaseline = 'bottom';
+  const fmtD = function(ts){
+    const dt = new Date(ts);
+    return String(dt.getDate()).padStart(2,'0') + '.' + String(dt.getMonth()+1).padStart(2,'0') + '.' + String(dt.getFullYear()).slice(2);
+  };
+  ctx.textAlign = 'left';  ctx.fillText(fmtD(tMin), padL, h - 4);
+  ctx.textAlign = 'right'; ctx.fillText(fmtD(tMax), w - padR, h - 4);
+}
+
+function openVolModal() {
+  document.getElementById('vol-modal').classList.add('open');
+  loadVolStats(false);
+}
+function closeVolModal() {
+  document.getElementById('vol-modal').classList.remove('open');
+}
+
+
+// ═══════════════════════════════════════════════════
+// v35: БАННЕР «ПОДКЛЮЧИТЕ API» + ПОШАГОВАЯ ИНСТРУКЦИЯ
+// Баннер показывается при каждом запуске, пока ключи не подключены.
+// Постоянного «больше не показывать» нет — по условию задачи.
+// ═══════════════════════════════════════════════════
+
+let _guideExchange = 'bybit';
+
+// Ключи шагов инструкции. Тексты — в I18N, чтобы работал переключатель языка.
+const GUIDE_STEPS = {
+  bybit:   ['ag_by_1','ag_by_2','ag_by_3','ag_by_4','ag_by_5','ag_by_6','ag_by_7','ag_by_8'],
+  deribit: ['ag_de_1','ag_de_2','ag_de_3','ag_de_4','ag_de_5','ag_de_6']
+};
+
+function renderApiGuide() {
+  const ol = document.getElementById('guide-steps');
+  const warn = document.getElementById('guide-warn');
+  if (!ol) return;
+  const keys = GUIDE_STEPS[_guideExchange] || GUIDE_STEPS.bybit;
+  let html = '';
+  for (let i = 0; i < keys.length; i++) html += '<li>' + tr(keys[i]) + '</li>';
+  ol.innerHTML = html;
+  if (warn) warn.innerHTML = tr(_guideExchange === 'deribit' ? 'ag_de_warn' : 'ag_by_warn');
+  const tb = document.getElementById('guide-tab-bybit');
+  const td = document.getElementById('guide-tab-deribit');
+  if (tb) tb.classList.toggle('active', _guideExchange === 'bybit');
+  if (td) td.classList.toggle('active', _guideExchange === 'deribit');
+}
+
+function setGuideExchange(ex) {
+  _guideExchange = (ex === 'deribit') ? 'deribit' : 'bybit';
+  renderApiGuide();
+}
+
+function openApiGuide(ex) {
+  // По умолчанию открываем вкладку той биржи, которая выбрана на главном экране
+  _guideExchange = ex || S.connectExchange || S.exchange || 'bybit';
+  if (_guideExchange !== 'deribit') _guideExchange = 'bybit';
+  renderApiGuide();
+  openModal('api-guide-modal');
+}
+
+function closeApiBanner() {
+  closeModal('api-banner');
+}
+
+// Показ баннера. Вызывается после попытки восстановить ключи из localStorage,
+// иначе баннер успел бы мигнуть у подключённого пользователя.
+function maybeShowApiBanner() {
+  try {
+    if (S.connected) return;
+    const el = document.getElementById('api-banner');
+    if (!el) return;
+    // Не перекрываем другие открытые модалки (например, «О приложении» при первом старте)
+    if (document.querySelector('.modal-overlay.open')) return;
+    openModal('api-banner');
+  } catch(e) { console.warn('[api-banner]', e.message); }
+}
+
 // PRICE ALERTS
 // ═══════════════════════════════════════════════════
 
@@ -8017,6 +8767,9 @@ window.addEventListener('resize', () => {
   if (document.getElementById('history-modal').classList.contains('open')) {
     resizeHistoryCanvas();
   }
+  // v35: график волатильности перерисовываем при смене размера/ориентации
+  var _vm35 = document.getElementById('vol-modal');
+  if (_vm35 && _vm35.classList.contains('open')) drawVolChart();
 });
 // visualViewport нужен для корректной высоты в WebView (APK)
 if (window.visualViewport) {
@@ -8092,7 +8845,9 @@ window.addEventListener('DOMContentLoaded', () => {
   // 🔐 v07: вынесено в async-функцию restoreApiConnection() — нужен await
   // для AES-GCM расшифровки. Вызов без await: восстановление идёт в фоне,
   // не блокируя остальную инициализацию DOMContentLoaded.
-  restoreApiConnection();
+  restoreApiConnection()
+    .then(maybeShowApiBanner)
+    .catch(maybeShowApiBanner);
 
   // v01 пункт 1: восстанавливаем последнюю реальную цену из кеша localStorage.
   // Если кеш есть — UI сразу покажет последнюю известную цену вместо хардкода.
@@ -8232,6 +8987,67 @@ const I18N = {
   en: {
     t_balance:"Balance / Available", t_dhedge:"Delta hedging", t_alerts:"Price alerts",
     t_theme:"Switch theme", t_rotate:"Rotate screen", t_about:"About & legal info",
+    // v35: API banner + key guide
+    ab_title:"\ud83d\udd0c Connect an exchange API",
+    ab_text:"The calculator works without an API key. Connecting a read-only key unlocks the parts that need your account data:",
+    ab_li1:"importing your open positions into the calculator",
+    ab_li2:"trade history with realised P&L",
+    ab_li3:"account balance and current marks in the positions table",
+    ab_note:"Keys are encrypted (AES-GCM) and stored only on your device \u2014 they are never sent to our servers. A read-only key is enough; never grant trading, transfer or withdrawal rights.",
+    ab_later:"Later",
+    ab_connect:"Connect",
+    ab_howto:"How to get the keys \u2014 step by step",
+    ag_title:"\ud83d\udd11 How to get API keys",
+    ag_note:"Paste the key and the secret into the connection window. The secret is shown only once at creation \u2014 if you lose it, create a new key.",
+    ag_by_warn:"Bybit only allows key creation on the website, not in the mobile app, and 2FA must be enabled. On a newly registered account the option may be unavailable for the first 48 hours.",
+    ag_by_1:"Open the Bybit website in a browser and log in.",
+    ag_by_2:"Go to <b>My Profile \u2192 Account &amp; Security \u2192 API Management</b>.",
+    ag_by_3:"Press <b>Create New Key</b> and choose <b>System-generated API Keys</b>.",
+    ag_by_4:"Set the usage to <b>API Transaction</b> and give the key any name, for example \u201cOptions Analyst\u201d.",
+    ag_by_5:"Permissions: choose <b>Read-only</b>. The app needs Unified Trading \u2014 <b>Positions</b> and <b>Orders</b>, plus <b>Wallet</b> for reading the balance.",
+    ag_by_6:"Leave trading, transfers and withdrawals switched off. The app never places orders.",
+    ag_by_7:"The IP whitelist can stay empty. Note that a key without an IP binding stops working after three months and has to be recreated.",
+    ag_by_8:"Press <b>Submit</b>, confirm with 2FA, then copy the <b>API Key</b> and <b>Secret Key</b>.",
+    ag_de_warn:"The first key on Deribit can only be created through the website. The app uses the Client ID / Client Secret pair.",
+    ag_de_1:"Open the Deribit website and log in.",
+    ag_de_2:"Open the account menu in the top-right corner and go to the <b>API</b> section.",
+    ag_de_3:"Press <b>Add new key</b>.",
+    ag_de_4:"Choose a <b>Deribit-generated key</b> \u2014 that is the one that gives you a Client ID and a Client Secret.",
+    ag_de_5:"Scope: set <b>Read</b> in the <b>Account</b> section. Write access to trading and wallet is not needed.",
+    ag_de_6:"Create the key and copy it: <b>Client ID</b> goes into the API Key field, <b>Client Secret</b> into the API Secret field.",
+
+    // v35: \u0441\u0442\u0430\u0442\u0438\u0441\u0442\u0438\u043a\u0430 \u0432\u043e\u043b\u0430\u0442\u0438\u043b\u044c\u043d\u043e\u0441\u0442\u0438
+    t_vol:"Volatility statistics",
+    vs_title:"Volatility",
+    vs_loading:"\u23f3 Loading market data\u2026",
+    vs_refresh:"Refresh",
+    vs_err:"Could not load volatility data.",
+    vs_na:"no data",
+    vs_iv_now:"Current IV (ATM)",
+    vs_iv_rank:"IV rank (1y)",
+    vs_iv_pct:"IV percentile (1y)",
+    vs_hv:"HV 30d",
+    vs_hv_rank:"HV rank (1y)",
+    vs_spread:"IV \u2212 HV",
+    vs_atm_sub:"nearest expiry, {d}d",
+    vs_hv_sub:"annualised",
+    vs_spread_sub:"implied vs realised",
+    vs_range:"1y range {lo}\u2013{hi}",
+    vs_no_iv:"IV history not published for this asset",
+    vs_low:"Low",
+    vs_mid:"Medium",
+    vs_high:"High",
+    vs_chart_iv:"IV (DVOL)",
+    vs_chart_hv:"HV 30d",
+    vs_v_iv_low:"IV rank {r}% \u2014 implied volatility sits in the lower quarter of its 1-year range.",
+    vs_v_iv_mid:"IV rank {r}% \u2014 implied volatility sits in the middle of its 1-year range.",
+    vs_v_iv_high:"IV rank {r}% \u2014 implied volatility sits in the upper quarter of its 1-year range.",
+    vs_v_hv_low:"HV rank {r}% \u2014 realised volatility sits in the lower quarter of its 1-year range.",
+    vs_v_hv_mid:"HV rank {r}% \u2014 realised volatility sits in the middle of its 1-year range.",
+    vs_v_hv_high:"HV rank {r}% \u2014 realised volatility sits in the upper quarter of its 1-year range.",
+    vs_v_hv_basis:"The exchange does not publish an IV history for {a}, so the figure is based on realised volatility.",
+    vs_v_none:"Not enough data to rank volatility for this asset.",
+    vs_note:"IV \u2014 Deribit DVOL index, one year of candles. HV \u2014 30-day realised volatility, annualised, computed from Bybit daily candles. Rank is the position within the 1-year range; percentile is the share of days below the current value. Data is cached for one hour. Informational only, not investment advice.",
     legs_positions:"Positions", btn_add:"+ Add", btn_import:"\u2b07 Import",
     btn_positions:"\ud83d\udccb Positions", t_pos_bybit:"Current positions on Bybit", btn_history:"\ud83d\udcca History",
     col_asset:"Asset", col_expiry:"Expiry", col_strike:"Strike", col_type:"Type",
@@ -8464,6 +9280,67 @@ const I18N = {
   ru: {
     t_balance:"\u0411\u0430\u043b\u0430\u043d\u0441 / \u0414\u043e\u0441\u0442\u0443\u043f\u043d\u043e", t_dhedge:"\u0414\u0435\u043b\u044c\u0442\u0430-\u0445\u0435\u0434\u0436\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u0435", t_alerts:"\u0410\u043b\u0435\u0440\u0442\u044b \u043f\u043e \u0446\u0435\u043d\u0435",
     t_theme:"\u0421\u043c\u0435\u043d\u0438\u0442\u044c \u0442\u0435\u043c\u0443", t_rotate:"\u041f\u043e\u0432\u0435\u0440\u043d\u0443\u0442\u044c \u044d\u043a\u0440\u0430\u043d", t_about:"\u041e \u043f\u0440\u0438\u043b\u043e\u0436\u0435\u043d\u0438\u0438 \u0438 \u044e\u0440\u0438\u0434\u0438\u0447\u0435\u0441\u043a\u0430\u044f \u0438\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0438\u044f",
+    // v35: banner + instrukciya
+    ab_title:"\ud83d\udd0c \u041f\u043e\u0434\u043a\u043b\u044e\u0447\u0438\u0442\u0435 API \u0431\u0438\u0440\u0436\u0438",
+    ab_text:"\u041a\u0430\u043b\u044c\u043a\u0443\u043b\u044f\u0442\u043e\u0440 \u0440\u0430\u0431\u043e\u0442\u0430\u0435\u0442 \u0438 \u0431\u0435\u0437 \u043a\u043b\u044e\u0447\u0430. \u041f\u043e\u0434\u043a\u043b\u044e\u0447\u0435\u043d\u0438\u0435 \u043a\u043b\u044e\u0447\u0430 \u0442\u043e\u043b\u044c\u043a\u043e \u043d\u0430 \u0447\u0442\u0435\u043d\u0438\u0435 \u043e\u0442\u043a\u0440\u044b\u0432\u0430\u0435\u0442 \u0442\u043e, \u0447\u0442\u043e \u0442\u0440\u0435\u0431\u0443\u0435\u0442 \u0434\u0430\u043d\u043d\u044b\u0445 \u0432\u0430\u0448\u0435\u0433\u043e \u0441\u0447\u0451\u0442\u0430:",
+    ab_li1:"\u0438\u043c\u043f\u043e\u0440\u0442 \u043e\u0442\u043a\u0440\u044b\u0442\u044b\u0445 \u043f\u043e\u0437\u0438\u0446\u0438\u0439 \u0432 \u043a\u0430\u043b\u044c\u043a\u0443\u043b\u044f\u0442\u043e\u0440",
+    ab_li2:"\u0438\u0441\u0442\u043e\u0440\u0438\u044f \u0441\u0434\u0435\u043b\u043e\u043a \u0441 \u0440\u0435\u0430\u043b\u0438\u0437\u043e\u0432\u0430\u043d\u043d\u044b\u043c P&L",
+    ab_li3:"\u0431\u0430\u043b\u0430\u043d\u0441 \u0441\u0447\u0451\u0442\u0430 \u0438 \u0442\u0435\u043a\u0443\u0449\u0438\u0435 mark-\u0446\u0435\u043d\u044b \u0432 \u0442\u0430\u0431\u043b\u0438\u0446\u0435 \u043f\u043e\u0437\u0438\u0446\u0438\u0439",
+    ab_note:"\u041a\u043b\u044e\u0447\u0438 \u0448\u0438\u0444\u0440\u0443\u044e\u0442\u0441\u044f (AES-GCM) \u0438 \u0445\u0440\u0430\u043d\u044f\u0442\u0441\u044f \u0442\u043e\u043b\u044c\u043a\u043e \u043d\u0430 \u0432\u0430\u0448\u0435\u043c \u0443\u0441\u0442\u0440\u043e\u0439\u0441\u0442\u0432\u0435 \u2014 \u043d\u0430 \u043d\u0430\u0448\u0438 \u0441\u0435\u0440\u0432\u0435\u0440\u044b \u043d\u0435 \u043f\u0435\u0440\u0435\u0434\u0430\u044e\u0442\u0441\u044f. \u0414\u043e\u0441\u0442\u0430\u0442\u043e\u0447\u043d\u043e \u043a\u043b\u044e\u0447\u0430 \u0442\u043e\u043b\u044c\u043a\u043e \u043d\u0430 \u0447\u0442\u0435\u043d\u0438\u0435; \u043f\u0440\u0430\u0432\u0430 \u043d\u0430 \u0442\u043e\u0440\u0433\u043e\u0432\u043b\u044e, \u043f\u0435\u0440\u0435\u0432\u043e\u0434\u044b \u0438 \u0432\u044b\u0432\u043e\u0434 \u0434\u0430\u0432\u0430\u0442\u044c \u043d\u0435 \u043d\u0443\u0436\u043d\u043e.",
+    ab_later:"\u041f\u043e\u0437\u0436\u0435",
+    ab_connect:"\u041f\u043e\u0434\u043a\u043b\u044e\u0447\u0438\u0442\u044c",
+    ab_howto:"\u041a\u0430\u043a \u043f\u043e\u043b\u0443\u0447\u0438\u0442\u044c \u043a\u043b\u044e\u0447\u0438 \u2014 \u043f\u043e\u0448\u0430\u0433\u043e\u0432\u0430\u044f \u0438\u043d\u0441\u0442\u0440\u0443\u043a\u0446\u0438\u044f",
+    ag_title:"\ud83d\udd11 \u041a\u0430\u043a \u043f\u043e\u043b\u0443\u0447\u0438\u0442\u044c API-\u043a\u043b\u044e\u0447\u0438",
+    ag_note:"\u041a\u043b\u044e\u0447 \u0438 \u0441\u0435\u043a\u0440\u0435\u0442 \u0432\u0441\u0442\u0430\u0432\u044c\u0442\u0435 \u0432 \u043e\u043a\u043d\u043e \u043f\u043e\u0434\u043a\u043b\u044e\u0447\u0435\u043d\u0438\u044f. \u0421\u0435\u043a\u0440\u0435\u0442 \u043f\u043e\u043a\u0430\u0437\u044b\u0432\u0430\u0435\u0442\u0441\u044f \u0442\u043e\u043b\u044c\u043a\u043e \u043e\u0434\u0438\u043d \u0440\u0430\u0437 \u043f\u0440\u0438 \u0441\u043e\u0437\u0434\u0430\u043d\u0438\u0438 \u2014 \u0435\u0441\u043b\u0438 \u043f\u043e\u0442\u0435\u0440\u044f\u043b\u0438, \u0441\u043e\u0437\u0434\u0430\u0439\u0442\u0435 \u043d\u043e\u0432\u044b\u0439 \u043a\u043b\u044e\u0447.",
+    ag_by_warn:"\u041d\u0430 Bybit \u043a\u043b\u044e\u0447\u0438 \u0441\u043e\u0437\u0434\u0430\u044e\u0442\u0441\u044f \u0442\u043e\u043b\u044c\u043a\u043e \u043d\u0430 \u0441\u0430\u0439\u0442\u0435, \u0432 \u043c\u043e\u0431\u0438\u043b\u044c\u043d\u043e\u043c \u043f\u0440\u0438\u043b\u043e\u0436\u0435\u043d\u0438\u0438 \u044d\u0442\u043e\u0433\u043e \u043d\u0435\u0442, \u0438 \u043d\u0443\u0436\u043d\u0430 \u0432\u043a\u043b\u044e\u0447\u0451\u043d\u043d\u0430\u044f 2FA. \u041d\u0430 \u0442\u043e\u043b\u044c\u043a\u043e \u0447\u0442\u043e \u0437\u0430\u0440\u0435\u0433\u0438\u0441\u0442\u0440\u0438\u0440\u043e\u0432\u0430\u043d\u043d\u043e\u043c \u0430\u043a\u043a\u0430\u0443\u043d\u0442\u0435 \u0440\u0430\u0437\u0434\u0435\u043b \u043c\u043e\u0436\u0435\u0442 \u0431\u044b\u0442\u044c \u043d\u0435\u0434\u043e\u0441\u0442\u0443\u043f\u0435\u043d \u043f\u0435\u0440\u0432\u044b\u0435 48 \u0447\u0430\u0441\u043e\u0432.",
+    ag_by_1:"\u041e\u0442\u043a\u0440\u043e\u0439\u0442\u0435 \u0441\u0430\u0439\u0442 Bybit \u0432 \u0431\u0440\u0430\u0443\u0437\u0435\u0440\u0435 \u0438 \u0432\u043e\u0439\u0434\u0438\u0442\u0435 \u0432 \u0430\u043a\u043a\u0430\u0443\u043d\u0442.",
+    ag_by_2:"\u041f\u0435\u0440\u0435\u0439\u0434\u0438\u0442\u0435 \u0432 <b>\u041f\u0440\u043e\u0444\u0438\u043b\u044c \u2192 Account &amp; Security \u2192 API Management</b>.",
+    ag_by_3:"\u041d\u0430\u0436\u043c\u0438\u0442\u0435 <b>Create New Key</b> \u0438 \u0432\u044b\u0431\u0435\u0440\u0438\u0442\u0435 <b>System-generated API Keys</b>.",
+    ag_by_4:"\u0422\u0438\u043f \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u043d\u0438\u044f \u2014 <b>API Transaction</b>. \u0418\u043c\u044f \u043a\u043b\u044e\u0447\u0430 \u043b\u044e\u0431\u043e\u0435, \u043d\u0430\u043f\u0440\u0438\u043c\u0435\u0440 \u00abOptions Analyst\u00bb.",
+    ag_by_5:"\u041f\u0440\u0430\u0432\u0430: \u0432\u044b\u0431\u0435\u0440\u0438\u0442\u0435 <b>Read-only</b>. \u041f\u0440\u0438\u043b\u043e\u0436\u0435\u043d\u0438\u044e \u043d\u0443\u0436\u043d\u044b Unified Trading \u2014 <b>Positions</b> \u0438 <b>Orders</b>, \u0430 \u0442\u0430\u043a\u0436\u0435 <b>Wallet</b> \u0434\u043b\u044f \u0447\u0442\u0435\u043d\u0438\u044f \u0431\u0430\u043b\u0430\u043d\u0441\u0430.",
+    ag_by_6:"\u0422\u043e\u0440\u0433\u043e\u0432\u043b\u044e, \u043f\u0435\u0440\u0435\u0432\u043e\u0434\u044b \u0438 \u0432\u044b\u0432\u043e\u0434 \u043e\u0441\u0442\u0430\u0432\u044c\u0442\u0435 \u0432\u044b\u043a\u043b\u044e\u0447\u0435\u043d\u043d\u044b\u043c\u0438. \u041f\u0440\u0438\u043b\u043e\u0436\u0435\u043d\u0438\u0435 \u043d\u0435 \u0432\u044b\u0441\u0442\u0430\u0432\u043b\u044f\u0435\u0442 \u043e\u0440\u0434\u0435\u0440\u0430.",
+    ag_by_7:"\u0421\u043f\u0438\u0441\u043e\u043a IP \u043c\u043e\u0436\u043d\u043e \u043e\u0441\u0442\u0430\u0432\u0438\u0442\u044c \u043f\u0443\u0441\u0442\u044b\u043c. \u0423\u0447\u0442\u0438\u0442\u0435: \u043a\u043b\u044e\u0447 \u0431\u0435\u0437 \u043f\u0440\u0438\u0432\u044f\u0437\u043a\u0438 \u043a IP \u043f\u0435\u0440\u0435\u0441\u0442\u0430\u0451\u0442 \u0440\u0430\u0431\u043e\u0442\u0430\u0442\u044c \u0447\u0435\u0440\u0435\u0437 \u0442\u0440\u0438 \u043c\u0435\u0441\u044f\u0446\u0430, \u0435\u0433\u043e \u043f\u0440\u0438\u0434\u0451\u0442\u0441\u044f \u0441\u043e\u0437\u0434\u0430\u0442\u044c \u0437\u0430\u043d\u043e\u0432\u043e.",
+    ag_by_8:"\u041d\u0430\u0436\u043c\u0438\u0442\u0435 <b>Submit</b>, \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0434\u0438\u0442\u0435 \u043a\u043e\u0434\u043e\u043c 2FA \u0438 \u0441\u043a\u043e\u043f\u0438\u0440\u0443\u0439\u0442\u0435 <b>API Key</b> \u0438 <b>Secret Key</b>.",
+    ag_de_warn:"\u041f\u0435\u0440\u0432\u044b\u0439 \u043a\u043b\u044e\u0447 \u043d\u0430 Deribit \u0441\u043e\u0437\u0434\u0430\u0451\u0442\u0441\u044f \u0442\u043e\u043b\u044c\u043a\u043e \u0447\u0435\u0440\u0435\u0437 \u0441\u0430\u0439\u0442. \u041f\u0440\u0438\u043b\u043e\u0436\u0435\u043d\u0438\u0435 \u0440\u0430\u0431\u043e\u0442\u0430\u0435\u0442 \u0441 \u043f\u0430\u0440\u043e\u0439 Client ID / Client Secret.",
+    ag_de_1:"\u041e\u0442\u043a\u0440\u043e\u0439\u0442\u0435 \u0441\u0430\u0439\u0442 Deribit \u0438 \u0432\u043e\u0439\u0434\u0438\u0442\u0435 \u0432 \u0430\u043a\u043a\u0430\u0443\u043d\u0442.",
+    ag_de_2:"\u041e\u0442\u043a\u0440\u043e\u0439\u0442\u0435 \u043c\u0435\u043d\u044e \u0430\u043a\u043a\u0430\u0443\u043d\u0442\u0430 \u0432 \u043f\u0440\u0430\u0432\u043e\u043c \u0432\u0435\u0440\u0445\u043d\u0435\u043c \u0443\u0433\u043b\u0443 \u0438 \u043f\u0435\u0440\u0435\u0439\u0434\u0438\u0442\u0435 \u0432 \u0440\u0430\u0437\u0434\u0435\u043b <b>API</b>.",
+    ag_de_3:"\u041d\u0430\u0436\u043c\u0438\u0442\u0435 <b>Add new key</b>.",
+    ag_de_4:"\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 <b>Deribit-generated key</b> \u2014 \u0438\u043c\u0435\u043d\u043d\u043e \u043e\u043d \u0434\u0430\u0451\u0442 \u043f\u0430\u0440\u0443 Client ID \u0438 Client Secret.",
+    ag_de_5:"Scope: \u0432 \u0440\u0430\u0437\u0434\u0435\u043b\u0435 <b>Account</b> \u043f\u043e\u0441\u0442\u0430\u0432\u044c\u0442\u0435 <b>Read</b>. \u041f\u0440\u0430\u0432\u0430 \u043d\u0430 \u0437\u0430\u043f\u0438\u0441\u044c \u0434\u043b\u044f \u0442\u043e\u0440\u0433\u043e\u0432\u043b\u0438 \u0438 \u043a\u043e\u0448\u0435\u043b\u044c\u043a\u0430 \u043d\u0435 \u043d\u0443\u0436\u043d\u044b.",
+    ag_de_6:"\u0421\u043e\u0437\u0434\u0430\u0439\u0442\u0435 \u043a\u043b\u044e\u0447 \u0438 \u0441\u043a\u043e\u043f\u0438\u0440\u0443\u0439\u0442\u0435: <b>Client ID</b> \u2014 \u0432 \u043f\u043e\u043b\u0435 API Key, <b>Client Secret</b> \u2014 \u0432 \u043f\u043e\u043b\u0435 API Secret.",
+
+    // v35: \u0441\u0442\u0430\u0442\u0438\u0441\u0442\u0438\u043a\u0430 \u0432\u043e\u043b\u0430\u0442\u0438\u043b\u044c\u043d\u043e\u0441\u0442\u0438
+    t_vol:"\u0421\u0442\u0430\u0442\u0438\u0441\u0442\u0438\u043a\u0430 \u0432\u043e\u043b\u0430\u0442\u0438\u043b\u044c\u043d\u043e\u0441\u0442\u0438",
+    vs_title:"\u0412\u043e\u043b\u0430\u0442\u0438\u043b\u044c\u043d\u043e\u0441\u0442\u044c",
+    vs_loading:"\u23f3 \u0417\u0430\u0433\u0440\u0443\u0437\u043a\u0430 \u0440\u044b\u043d\u043e\u0447\u043d\u044b\u0445 \u0434\u0430\u043d\u043d\u044b\u0445\u2026",
+    vs_refresh:"\u041e\u0431\u043d\u043e\u0432\u0438\u0442\u044c",
+    vs_err:"\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044c \u0434\u0430\u043d\u043d\u044b\u0435 \u043f\u043e \u0432\u043e\u043b\u0430\u0442\u0438\u043b\u044c\u043d\u043e\u0441\u0442\u0438.",
+    vs_na:"\u043d\u0435\u0442 \u0434\u0430\u043d\u043d\u044b\u0445",
+    vs_iv_now:"\u0422\u0435\u043a\u0443\u0449\u0430\u044f IV (ATM)",
+    vs_iv_rank:"IV rank (1\u0433)",
+    vs_iv_pct:"IV percentile (1\u0433)",
+    vs_hv:"HV 30\u0434",
+    vs_hv_rank:"HV rank (1\u0433)",
+    vs_spread:"IV \u2212 HV",
+    vs_atm_sub:"\u0431\u043b\u0438\u0436\u0430\u0439\u0448\u0430\u044f \u044d\u043a\u0441\u043f\u0438\u0440\u0430\u0446\u0438\u044f, {d}\u0434",
+    vs_hv_sub:"\u0433\u043e\u0434\u043e\u0432\u0430\u044f",
+    vs_spread_sub:"\u043e\u0436\u0438\u0434\u0430\u0435\u043c\u0430\u044f \u043f\u0440\u043e\u0442\u0438\u0432 \u0440\u0435\u0430\u043b\u0438\u0437\u043e\u0432\u0430\u043d\u043d\u043e\u0439",
+    vs_range:"\u0434\u0438\u0430\u043f\u0430\u0437\u043e\u043d \u0433\u043e\u0434\u0430 {lo}\u2013{hi}",
+    vs_no_iv:"\u0431\u0438\u0440\u0436\u0430 \u043d\u0435 \u043f\u0443\u0431\u043b\u0438\u043a\u0443\u0435\u0442 \u0438\u0441\u0442\u043e\u0440\u0438\u044e IV \u043f\u043e \u044d\u0442\u043e\u043c\u0443 \u0430\u043a\u0442\u0438\u0432\u0443",
+    vs_low:"\u041d\u0438\u0437\u043a\u0430\u044f",
+    vs_mid:"\u0421\u0440\u0435\u0434\u043d\u044f\u044f",
+    vs_high:"\u0412\u044b\u0441\u043e\u043a\u0430\u044f",
+    vs_chart_iv:"IV (DVOL)",
+    vs_chart_hv:"HV 30\u0434",
+    vs_v_iv_low:"IV rank {r}% \u2014 \u043e\u0436\u0438\u0434\u0430\u0435\u043c\u0430\u044f \u0432\u043e\u043b\u0430\u0442\u0438\u043b\u044c\u043d\u043e\u0441\u0442\u044c \u0432 \u043d\u0438\u0436\u043d\u0435\u0439 \u0447\u0435\u0442\u0432\u0435\u0440\u0442\u0438 \u0433\u043e\u0434\u043e\u0432\u043e\u0433\u043e \u0434\u0438\u0430\u043f\u0430\u0437\u043e\u043d\u0430.",
+    vs_v_iv_mid:"IV rank {r}% \u2014 \u043e\u0436\u0438\u0434\u0430\u0435\u043c\u0430\u044f \u0432\u043e\u043b\u0430\u0442\u0438\u043b\u044c\u043d\u043e\u0441\u0442\u044c \u0432 \u0441\u0435\u0440\u0435\u0434\u0438\u043d\u0435 \u0433\u043e\u0434\u043e\u0432\u043e\u0433\u043e \u0434\u0438\u0430\u043f\u0430\u0437\u043e\u043d\u0430.",
+    vs_v_iv_high:"IV rank {r}% \u2014 \u043e\u0436\u0438\u0434\u0430\u0435\u043c\u0430\u044f \u0432\u043e\u043b\u0430\u0442\u0438\u043b\u044c\u043d\u043e\u0441\u0442\u044c \u0432 \u0432\u0435\u0440\u0445\u043d\u0435\u0439 \u0447\u0435\u0442\u0432\u0435\u0440\u0442\u0438 \u0433\u043e\u0434\u043e\u0432\u043e\u0433\u043e \u0434\u0438\u0430\u043f\u0430\u0437\u043e\u043d\u0430.",
+    vs_v_hv_low:"HV rank {r}% \u2014 \u0440\u0435\u0430\u043b\u0438\u0437\u043e\u0432\u0430\u043d\u043d\u0430\u044f \u0432\u043e\u043b\u0430\u0442\u0438\u043b\u044c\u043d\u043e\u0441\u0442\u044c \u0432 \u043d\u0438\u0436\u043d\u0435\u0439 \u0447\u0435\u0442\u0432\u0435\u0440\u0442\u0438 \u0433\u043e\u0434\u043e\u0432\u043e\u0433\u043e \u0434\u0438\u0430\u043f\u0430\u0437\u043e\u043d\u0430.",
+    vs_v_hv_mid:"HV rank {r}% \u2014 \u0440\u0435\u0430\u043b\u0438\u0437\u043e\u0432\u0430\u043d\u043d\u0430\u044f \u0432\u043e\u043b\u0430\u0442\u0438\u043b\u044c\u043d\u043e\u0441\u0442\u044c \u0432 \u0441\u0435\u0440\u0435\u0434\u0438\u043d\u0435 \u0433\u043e\u0434\u043e\u0432\u043e\u0433\u043e \u0434\u0438\u0430\u043f\u0430\u0437\u043e\u043d\u0430.",
+    vs_v_hv_high:"HV rank {r}% \u2014 \u0440\u0435\u0430\u043b\u0438\u0437\u043e\u0432\u0430\u043d\u043d\u0430\u044f \u0432\u043e\u043b\u0430\u0442\u0438\u043b\u044c\u043d\u043e\u0441\u0442\u044c \u0432 \u0432\u0435\u0440\u0445\u043d\u0435\u0439 \u0447\u0435\u0442\u0432\u0435\u0440\u0442\u0438 \u0433\u043e\u0434\u043e\u0432\u043e\u0433\u043e \u0434\u0438\u0430\u043f\u0430\u0437\u043e\u043d\u0430.",
+    vs_v_hv_basis:"\u0411\u0438\u0440\u0436\u0430 \u043d\u0435 \u043f\u0443\u0431\u043b\u0438\u043a\u0443\u0435\u0442 \u0438\u0441\u0442\u043e\u0440\u0438\u044e IV \u043f\u043e {a}, \u043f\u043e\u044d\u0442\u043e\u043c\u0443 \u043e\u0446\u0435\u043d\u043a\u0430 \u0441\u0447\u0438\u0442\u0430\u043d\u0430 \u043f\u043e \u0440\u0435\u0430\u043b\u0438\u0437\u043e\u0432\u0430\u043d\u043d\u043e\u0439 \u0432\u043e\u043b\u0430\u0442\u0438\u043b\u044c\u043d\u043e\u0441\u0442\u0438.",
+    vs_v_none:"\u0414\u0430\u043d\u043d\u044b\u0445 \u043f\u043e \u044d\u0442\u043e\u043c\u0443 \u0430\u043a\u0442\u0438\u0432\u0443 \u043d\u0435\u0434\u043e\u0441\u0442\u0430\u0442\u043e\u0447\u043d\u043e \u0434\u043b\u044f \u0440\u0430\u0441\u0447\u0451\u0442\u0430 rank.",
+    vs_note:"IV \u2014 \u0438\u043d\u0434\u0435\u043a\u0441 Deribit DVOL, \u0433\u043e\u0434 \u0441\u0432\u0435\u0447\u0435\u0439. HV \u2014 \u0440\u0435\u0430\u043b\u0438\u0437\u043e\u0432\u0430\u043d\u043d\u0430\u044f \u0432\u043e\u043b\u0430\u0442\u0438\u043b\u044c\u043d\u043e\u0441\u0442\u044c \u0437\u0430 30 \u0434\u043d\u0435\u0439, \u0433\u043e\u0434\u043e\u0432\u0430\u044f, \u043f\u043e \u0434\u043d\u0435\u0432\u043d\u044b\u043c \u0441\u0432\u0435\u0447\u0430\u043c Bybit. Rank \u2014 \u043f\u043e\u043b\u043e\u0436\u0435\u043d\u0438\u0435 \u0432 \u0433\u043e\u0434\u043e\u0432\u043e\u043c \u0434\u0438\u0430\u043f\u0430\u0437\u043e\u043d\u0435, percentile \u2014 \u0434\u043e\u043b\u044f \u0434\u043d\u0435\u0439 \u043d\u0438\u0436\u0435 \u0442\u0435\u043a\u0443\u0449\u0435\u0433\u043e \u0437\u043d\u0430\u0447\u0435\u043d\u0438\u044f. \u0414\u0430\u043d\u043d\u044b\u0435 \u043a\u0435\u0448\u0438\u0440\u0443\u044e\u0442\u0441\u044f \u043d\u0430 \u0447\u0430\u0441. \u0418\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0438\u044f \u043d\u043e\u0441\u0438\u0442 \u0441\u043f\u0440\u0430\u0432\u043e\u0447\u043d\u044b\u0439 \u0445\u0430\u0440\u0430\u043a\u0442\u0435\u0440 \u0438 \u043d\u0435 \u044f\u0432\u043b\u044f\u0435\u0442\u0441\u044f \u0438\u043d\u0432\u0435\u0441\u0442\u0438\u0446\u0438\u043e\u043d\u043d\u043e\u0439 \u0440\u0435\u043a\u043e\u043c\u0435\u043d\u0434\u0430\u0446\u0438\u0435\u0439.",
     legs_positions:"\u041f\u043e\u0437\u0438\u0446\u0438\u0438", btn_add:"+ \u0414\u043e\u0431\u0430\u0432\u0438\u0442\u044c", btn_import:"\u2b07 \u0418\u043c\u043f\u043e\u0440\u0442",
     btn_positions:"\ud83d\udccb \u041f\u043e\u0437\u0438\u0446\u0438\u0438", t_pos_bybit:"\u0422\u0435\u043a\u0443\u0449\u0438\u0435 \u043f\u043e\u0437\u0438\u0446\u0438\u0438 \u043d\u0430 Bybit", btn_history:"\ud83d\udcca \u0418\u0441\u0442\u043e\u0440\u0438\u044f",
     col_asset:"\u0410\u043a\u0442\u0438\u0432", col_expiry:"\u042d\u043a\u0441\u043f\u0438\u0440\u0430\u0446\u0438\u044f", col_strike:"\u0421\u0442\u0440\u0430\u0439\u043a", col_type:"\u0422\u0438\u043f",
@@ -8721,6 +9598,8 @@ function applyI18n() {
 }
 function tr(key, params) { return t(key, params); }
 function refreshDynamicI18n() {
+  // v35: инструкция по ключам собирается в JS — перерисовываем при смене языка
+  try { if (document.getElementById('guide-steps')) renderApiGuide(); } catch(e){}
   // Перерисовка JS-динамики при смене языка (canvas-подписи и т.п.)
   try { if (typeof drawChart === 'function') drawChart(); } catch(e){}
   // v31: оговорка про мульти-экспирацию и подсказки меток
