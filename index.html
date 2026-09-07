@@ -1187,14 +1187,6 @@ input[type="range"] { touch-action: none; }
   cursor: pointer; font-size: 20px; padding: 0 2px; flex-shrink: 0; line-height: 1;
 }
 /* ─── v35: VOLATILITY STATS ─────────────────────────────────────── */
-#vol-btn {
-  width: 30px; height: 30px; border-radius: 7px;
-  background: var(--bg4); border: 1px solid var(--border2);
-  color: var(--text2); cursor: pointer; font-size: 14px;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0; transition: all .2s;
-}
-#vol-btn:active { background: var(--purple); color: #fff; }
 
 #vol-modal {
   position: fixed; inset: 0; z-index: 200;
@@ -1267,10 +1259,6 @@ input[type="range"] { touch-action: none; }
 #vol-legend i { display: inline-block; width: 12px; height: 2px; vertical-align: middle; margin-right: 5px; }
 #vol-note { padding: 10px 12px 20px; font-size: 10px; color: var(--text3); line-height: 1.55; }
 
-@media (orientation: portrait) {
-  #vol-btn { width: 26px; height: 26px; font-size: 13px; flex-shrink: 0; }
-}
-
 /* ─── v35: БАННЕР ПОДКЛЮЧЕНИЯ API + ИНСТРУКЦИЯ ─── */
 #api-banner .modal-sheet { border-top: 2px solid var(--accent); }
 #api-banner-text { font-size: 12px; color: var(--text2); line-height: 1.5; margin-bottom: 10px; }
@@ -1304,6 +1292,29 @@ input[type="range"] { touch-action: none; }
   border-radius: 8px; padding: 8px 10px; margin-bottom: 10px;
 }
 
+/* ─── v35.1: средние DVOL и IV rank по окнам ─── */
+#vol-avg-wrap {
+  padding: 8px 12px 10px; background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+}
+#vol-avg-head { font-size: 10px; color: var(--text3); margin-bottom: 6px; }
+#vol-avg-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+#vol-avg-table th {
+  font-weight: 500; color: var(--text3); font-size: 9px;
+  padding: 0 2px 4px; text-align: right; white-space: nowrap;
+}
+#vol-avg-table th:first-child { text-align: left; }
+#vol-avg-table td {
+  padding: 4px 2px; text-align: right; white-space: nowrap;
+  font-family: var(--font); font-weight: 700; color: var(--text);
+  border-top: 1px solid var(--border);
+}
+#vol-avg-table td.va-lbl {
+  text-align: left; font-family: var(--font2); font-weight: 400;
+  color: var(--text2); font-size: 10px;
+}
+#vol-avg-table td.va-na { color: var(--text3); font-weight: 400; }
+
 </style>
 </head>
 <body>
@@ -1325,8 +1336,6 @@ input[type="range"] { touch-action: none; }
     </button>
     <button id="theme-btn" onclick="toggleTheme()" title="Сменить тему" data-i18n-title="t_theme">🌙</button>
     <button id="rotate-btn" onclick="toggleOrientation()" title="Повернуть экран" data-i18n-title="t_rotate">⟳</button>
-    <!-- v35: статистика волатильности -->
-    <button id="vol-btn" onclick="openVolModal()" title="Статистика волатильности" data-i18n-title="t_vol">📈</button>
     <button id="lang-toggle" class="exchange-btn" onclick="toggleLang()" title="Language / Язык" style="font-weight:700;min-width:34px">RU</button>
     <select id="asset-select" onchange="setAsset(this.value)">
       <optgroup label="Bybit &amp; Deribit">
@@ -1620,6 +1629,8 @@ input[type="range"] { touch-action: none; }
       <button class="leg-action-btn import-btn" onclick="importPositions()" data-i18n="btn_import">⬇ Импорт</button>
       <button class="leg-action-btn" onclick="openPositionsModal()" style="border-color:var(--green);color:var(--green)" title="Текущие позиции на Bybit" data-i18n-title="t_pos_bybit" data-i18n="btn_positions">📋 Позиции</button>
       <button class="leg-action-btn" onclick="openStrangleCalc()" style="border-color:var(--accent);color:var(--accent)" title="Калькулятор связки Short Strangle" data-i18n-title="t_calc" data-i18n="btn_calc">🧮 Рассчитать</button>
+      <!-- v35.1: статистика волатильности -->
+      <button class="leg-action-btn" id="ivrank-btn" onclick="openVolModal()" style="border-color:var(--blue);color:var(--blue)" data-i18n-title="t_vol" data-i18n="btn_ivrank">IV rank</button>
       <button class="leg-action-btn" onclick="openHistoryModal()" style="border-color:var(--purple);color:var(--purple);margin-left:auto" data-i18n="btn_history">📊 История</button>
       <div id="delta-pill" style="display:none"></div>
     </div>
@@ -1827,6 +1838,33 @@ input[type="range"] { touch-action: none; }
           <div class="v-val" id="vs-spread">—</div>
           <div class="v-sub" id="vs-spread-sub"></div>
         </div>
+      </div>
+      <!-- v35.1: средние значения индекса и IV rank по трём окнам -->
+      <div id="vol-avg-wrap">
+        <div id="vol-avg-head" data-i18n="vs_avg_head"></div>
+        <table id="vol-avg-table">
+          <thead>
+            <tr>
+              <th></th>
+              <th data-i18n="vs_w_now">Сейчас</th>
+              <th data-i18n="vs_w_m">Месяц</th>
+              <th data-i18n="vs_w_q">Квартал</th>
+              <th data-i18n="vs_w_y">Год</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="va-lbl" data-i18n="vs_avg_iv">Средняя IV</td>
+              <td id="va-iv-now">—</td><td id="va-iv-m">—</td>
+              <td id="va-iv-q">—</td><td id="va-iv-y">—</td>
+            </tr>
+            <tr>
+              <td class="va-lbl" data-i18n="vs_rank_row">IV rank</td>
+              <td id="va-rk-now" class="va-na">—</td><td id="va-rk-m">—</td>
+              <td id="va-rk-q">—</td><td id="va-rk-y">—</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
       <div id="vol-chart-wrap"><canvas id="vol-canvas"></canvas></div>
       <div id="vol-legend">
@@ -7265,7 +7303,7 @@ async function fetchMarketIV(asset, exchange) {
 // остальные считаются. Проверка идёт в рантайме, а не по константе.
 // ═══════════════════════════════════════════════════
 
-const VOL_CACHE_KEY = 'oa-vol-cache';
+const VOL_CACHE_KEY = 'oa-vol-cache-v2';   // v35.1: схема изменилась — старый кеш не подходит
 const VOL_CACHE_TTL = 60 * 60 * 1000;   // 1 час
 const VOL_HV_WINDOW = 30;               // окно расчёта HV, дней
 let _volState = null;                   // последний посчитанный результат
@@ -7489,6 +7527,28 @@ async function computeVolStats(asset, exchange) {
     out.ivPct = rp ? rp.pct : null;
     out.ivLo = rp ? rp.lo : null;
     out.ivHi = rp ? rp.hi : null;
+
+    // v35.1: среднее значение индекса и IV rank по трём окнам.
+    // Окна режем по времени, а не по числу точек: шаг свечи DVOL зависит
+    // от того, какой resolution ответил (сутки / 12ч / час).
+    const WIN = { m: 30, q: 90, y: 365 };
+    const nowTs = Date.now();
+    out.ivAvg = {};
+    out.ivRankW = {};
+    for (const wk in WIN) {
+      const from = nowTs - WIN[wk] * 86400000;
+      const sub = dvol.filter(function(x){ return x.ts >= from; });
+      if (sub.length < 5) { out.ivAvg[wk] = null; out.ivRankW[wk] = null; continue; }
+      let sum = 0;
+      for (let i = 0; i < sub.length; i++) sum += sub[i].close;
+      out.ivAvg[wk] = sum / sub.length;
+      const rpw = calcRankPct(
+        sub.map(function(x){ return x.close; }),
+        sub.map(function(x){ return x.low; }),
+        sub.map(function(x){ return x.high; }),
+        cur);
+      out.ivRankW[wk] = rpw ? rpw.rank : null;
+    }
   }
 
   // HV из свечей
@@ -7631,6 +7691,25 @@ function renderVolStats() {
       vd.innerHTML = '<span class="vv-badge vv-' + lvl + '">' + badge + '</span>' + txt;
     }
   }
+
+  // v35.1: таблица средних DVOL и IV rank по окнам
+  const _avgHead = document.getElementById('vol-avg-head');
+  if (_avgHead) _avgHead.textContent = tr('vs_avg_head');
+  const _setAvg = function(id, v, isPct) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const ok = isFinite(v) && v !== null;
+    el.textContent = ok ? (isPct ? Math.round(v) + '%' : (Math.round(v * 10) / 10).toFixed(1)) : '\u2014';
+    el.className = ok ? '' : 'va-na';
+  };
+  const _A = d.ivAvg || {}, _R = d.ivRankW || {};
+  _setAvg('va-iv-now', d.dvolNow, false);
+  _setAvg('va-iv-m', _A.m, false);
+  _setAvg('va-iv-q', _A.q, false);
+  _setAvg('va-iv-y', _A.y, false);
+  _setAvg('va-rk-m', _R.m, true);
+  _setAvg('va-rk-q', _R.q, true);
+  _setAvg('va-rk-y', _R.y, true);
 
   const note = document.getElementById('vol-note');
   if (note) note.textContent = tr('vs_note');
@@ -8987,6 +9066,15 @@ const I18N = {
   en: {
     t_balance:"Balance / Available", t_dhedge:"Delta hedging", t_alerts:"Price alerts",
     t_theme:"Switch theme", t_rotate:"Rotate screen", t_about:"About & legal info",
+    // v35.1: IV rank windows
+    btn_ivrank:"IV rank",
+    vs_avg_head:"IV index (DVOL): average over the period and rank against that period",
+    vs_w_now:"Now",
+    vs_w_m:"Month",
+    vs_w_q:"Quarter",
+    vs_w_y:"Year",
+    vs_avg_iv:"Average IV",
+    vs_rank_row:"IV rank",
     // v35: API banner + key guide
     ab_title:"\ud83d\udd0c Connect an exchange API",
     ab_text:"The calculator works without an API key. Connecting a read-only key unlocks the parts that need your account data:",
@@ -9280,6 +9368,15 @@ const I18N = {
   ru: {
     t_balance:"\u0411\u0430\u043b\u0430\u043d\u0441 / \u0414\u043e\u0441\u0442\u0443\u043f\u043d\u043e", t_dhedge:"\u0414\u0435\u043b\u044c\u0442\u0430-\u0445\u0435\u0434\u0436\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u0435", t_alerts:"\u0410\u043b\u0435\u0440\u0442\u044b \u043f\u043e \u0446\u0435\u043d\u0435",
     t_theme:"\u0421\u043c\u0435\u043d\u0438\u0442\u044c \u0442\u0435\u043c\u0443", t_rotate:"\u041f\u043e\u0432\u0435\u0440\u043d\u0443\u0442\u044c \u044d\u043a\u0440\u0430\u043d", t_about:"\u041e \u043f\u0440\u0438\u043b\u043e\u0436\u0435\u043d\u0438\u0438 \u0438 \u044e\u0440\u0438\u0434\u0438\u0447\u0435\u0441\u043a\u0430\u044f \u0438\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0438\u044f",
+    // v35.1: okna IV rank
+    btn_ivrank:"IV rank",
+    vs_avg_head:"\u0418\u043d\u0434\u0435\u043a\u0441 IV (DVOL): \u0441\u0440\u0435\u0434\u043d\u0435\u0435 \u0437\u0430 \u043f\u0435\u0440\u0438\u043e\u0434 \u0438 rank \u043e\u0442\u043d\u043e\u0441\u0438\u0442\u0435\u043b\u044c\u043d\u043e \u044d\u0442\u043e\u0433\u043e \u0436\u0435 \u043f\u0435\u0440\u0438\u043e\u0434\u0430",
+    vs_w_now:"\u0421\u0435\u0439\u0447\u0430\u0441",
+    vs_w_m:"\u041c\u0435\u0441\u044f\u0446",
+    vs_w_q:"\u041a\u0432\u0430\u0440\u0442\u0430\u043b",
+    vs_w_y:"\u0413\u043e\u0434",
+    vs_avg_iv:"\u0421\u0440\u0435\u0434\u043d\u044f\u044f IV",
+    vs_rank_row:"IV rank",
     // v35: banner + instrukciya
     ab_title:"\ud83d\udd0c \u041f\u043e\u0434\u043a\u043b\u044e\u0447\u0438\u0442\u0435 API \u0431\u0438\u0440\u0436\u0438",
     ab_text:"\u041a\u0430\u043b\u044c\u043a\u0443\u043b\u044f\u0442\u043e\u0440 \u0440\u0430\u0431\u043e\u0442\u0430\u0435\u0442 \u0438 \u0431\u0435\u0437 \u043a\u043b\u044e\u0447\u0430. \u041f\u043e\u0434\u043a\u043b\u044e\u0447\u0435\u043d\u0438\u0435 \u043a\u043b\u044e\u0447\u0430 \u0442\u043e\u043b\u044c\u043a\u043e \u043d\u0430 \u0447\u0442\u0435\u043d\u0438\u0435 \u043e\u0442\u043a\u0440\u044b\u0432\u0430\u0435\u0442 \u0442\u043e, \u0447\u0442\u043e \u0442\u0440\u0435\u0431\u0443\u0435\u0442 \u0434\u0430\u043d\u043d\u044b\u0445 \u0432\u0430\u0448\u0435\u0433\u043e \u0441\u0447\u0451\u0442\u0430:",
