@@ -7444,8 +7444,8 @@ async function fetchDvolSeries(asset) {
       for (let k = 0; k < rows.length; k++) {
         const x = rows[k];
         const c = parseFloat(x[4]), hi = parseFloat(x[2]), lo = parseFloat(x[3]);
-        if (!isFinite(c) || c <= 0) continue;
-        out.push({ ts: +x[0], high: isFinite(hi) ? hi : c, low: isFinite(lo) ? lo : c, close: c });
+        if (!Number.isFinite(c) || c <= 0) continue;
+        out.push({ ts: +x[0], high: Number.isFinite(hi) ? hi : c, low: Number.isFinite(lo) ? lo : c, close: c });
         if (out[out.length-1].high > mx) mx = out[out.length-1].high;
       }
       if (out.length < 30) continue;
@@ -7474,7 +7474,7 @@ async function fetchDailyCloses(asset, limit) {
     const out = [];
     for (let i = 0; i < list.length; i++) {
       const c = parseFloat(list[i][4]);
-      if (isFinite(c) && c > 0) out.push({ ts: +list[i][0], close: c });
+      if (Number.isFinite(c) && c > 0) out.push({ ts: +list[i][0], close: c });
     }
     out.sort(function(a,b){ return a.ts - b.ts; });
     return out.length >= VOL_HV_WINDOW + 10 ? out : null;
@@ -7502,7 +7502,7 @@ function calcHvSeries(closes, win) {
 
 // ── rank по годовому диапазону + percentile по доле периодов ниже ──
 function calcRankPct(closes, lows, highs, current) {
-  if (!closes || closes.length < 30 || !isFinite(current)) return null;
+  if (!closes || closes.length < 30 || !Number.isFinite(current)) return null;
   let lo = Infinity, hi = -Infinity, below = 0;
   for (let i = 0; i < closes.length; i++) {
     const l = lows ? lows[i] : closes[i];
@@ -7526,7 +7526,7 @@ function _volParseOptName(name) {
   const m = /^(\d{1,2})([A-Z]{3})(\d{2})$/.exec(p[1]);
   if (!m || MON[m[2]] === undefined) return null;
   const strike = parseFloat(p[2]);
-  if (!isFinite(strike) || strike <= 0) return null;
+  if (!Number.isFinite(strike) || strike <= 0) return null;
   return {
     exp: Date.UTC(2000 + parseInt(m[3], 10), MON[m[2]], parseInt(m[1], 10), 8, 0, 0),
     strike: strike,
@@ -7540,7 +7540,7 @@ function _volPickAtmIv(rows, spot) {
   const cand = [];
   for (let i = 0; i < rows.length; i++) {
     const iv = rows[i].iv;
-    if (!isFinite(iv) || iv <= 0) continue;
+    if (!Number.isFinite(iv) || iv <= 0) continue;
     const p = _volParseOptName(rows[i].name);
     if (!p) continue;
     const dte = (p.exp - now) / 86400000;
@@ -7568,7 +7568,7 @@ function _volPickAtmIv(rows, spot) {
 // активам с ценой ниже доллара (DOGE, XRP, TRX). Здесь страйк берётся из цепочки.
 async function fetchAtmIvFromChain(asset, exchange) {
   const spot = S.spotPrice;
-  if (!spot || !isFinite(spot) || spot <= 0) return null;
+  if (!spot || !Number.isFinite(spot) || spot <= 0) return null;
   try {
     if (exchange === 'deribit') {
       const r = await fetch('https://www.deribit.com/api/v2/public/get_book_summary_by_currency?currency=' +
@@ -7667,7 +7667,7 @@ async function computeVolStats(asset, exchange) {
     out.ivNow = atm.iv;
     out.ivDte = atm.dte;
     out.ivStrike = atm.strike;
-    if (isFinite(out.hvNow)) out.spread = atm.iv - out.hvNow;
+    if (Number.isFinite(out.hvNow)) out.spread = atm.iv - out.hvNow;
   }
   return out;
 }
@@ -7695,7 +7695,7 @@ async function loadVolStats(force) {
 
   try {
     const data = await computeVolStats(asset, exchange);
-    const hasAny = isFinite(data.ivNow) || isFinite(data.hvNow) || isFinite(data.dvolNow);
+    const hasAny = Number.isFinite(data.ivNow) || Number.isFinite(data.hvNow) || Number.isFinite(data.dvolNow);
     if (!hasAny) throw new Error(tr('vs_err'));
     _volState = data;
     _volCacheWrite(key, data);
@@ -7710,7 +7710,7 @@ async function loadVolStats(force) {
 }
 
 function _volFmt(v, d) {
-  return isFinite(v) ? v.toFixed(d === undefined ? 1 : d) : null;
+  return Number.isFinite(v) ? v.toFixed(d === undefined ? 1 : d) : null;
 }
 function _volSetCell(id, subId, text, sub, cls) {
   const el = document.getElementById(id);
@@ -7737,42 +7737,42 @@ function renderVolStats() {
 
   // Текущая IV
   _volSetCell('vs-iv-now', 'vs-iv-now-sub',
-    isFinite(d.ivNow) ? _volFmt(d.ivNow) + '%' : na,
-    isFinite(d.ivNow) ? tr('vs_atm_sub', { d: d.ivDte }) : '',
-    isFinite(d.ivNow) ? '' : 'na');
+    Number.isFinite(d.ivNow) ? _volFmt(d.ivNow) + '%' : na,
+    Number.isFinite(d.ivNow) ? tr('vs_atm_sub', { d: d.ivDte }) : '',
+    Number.isFinite(d.ivNow) ? '' : 'na');
 
   // IV rank / percentile
   _volSetCell('vs-iv-rank', 'vs-iv-rank-sub',
-    isFinite(d.ivRank) ? Math.round(d.ivRank) + '%' : na,
-    isFinite(d.ivLo) ? tr('vs_range', { lo: _volFmt(d.ivLo, 0), hi: _volFmt(d.ivHi, 0) }) : tr('vs_no_iv'),
-    isFinite(d.ivRank) ? '' : 'na');
+    Number.isFinite(d.ivRank) ? Math.round(d.ivRank) + '%' : na,
+    Number.isFinite(d.ivLo) ? tr('vs_range', { lo: _volFmt(d.ivLo, 0), hi: _volFmt(d.ivHi, 0) }) : tr('vs_no_iv'),
+    Number.isFinite(d.ivRank) ? '' : 'na');
   _volSetCell('vs-iv-pct', 'vs-iv-pct-sub',
-    isFinite(d.ivPct) ? Math.round(d.ivPct) + '%' : na,
-    isFinite(d.dvolNow) ? 'DVOL ' + _volFmt(d.dvolNow) : '',
-    isFinite(d.ivPct) ? '' : 'na');
+    Number.isFinite(d.ivPct) ? Math.round(d.ivPct) + '%' : na,
+    Number.isFinite(d.dvolNow) ? 'DVOL ' + _volFmt(d.dvolNow) : '',
+    Number.isFinite(d.ivPct) ? '' : 'na');
 
   // HV
   _volSetCell('vs-hv', 'vs-hv-sub',
-    isFinite(d.hvNow) ? _volFmt(d.hvNow) + '%' : na,
-    isFinite(d.hvNow) ? tr('vs_hv_sub') : '',
-    isFinite(d.hvNow) ? '' : 'na');
+    Number.isFinite(d.hvNow) ? _volFmt(d.hvNow) + '%' : na,
+    Number.isFinite(d.hvNow) ? tr('vs_hv_sub') : '',
+    Number.isFinite(d.hvNow) ? '' : 'na');
   _volSetCell('vs-hv-rank', 'vs-hv-rank-sub',
-    isFinite(d.hvRank) ? Math.round(d.hvRank) + '%' : na,
-    isFinite(d.hvLo) ? tr('vs_range', { lo: _volFmt(d.hvLo, 0), hi: _volFmt(d.hvHi, 0) }) : '',
-    isFinite(d.hvRank) ? '' : 'na');
+    Number.isFinite(d.hvRank) ? Math.round(d.hvRank) + '%' : na,
+    Number.isFinite(d.hvLo) ? tr('vs_range', { lo: _volFmt(d.hvLo, 0), hi: _volFmt(d.hvHi, 0) }) : '',
+    Number.isFinite(d.hvRank) ? '' : 'na');
 
   // Спред IV − HV
   _volSetCell('vs-spread', 'vs-spread-sub',
-    isFinite(d.spread) ? (d.spread >= 0 ? '+' : '') + _volFmt(d.spread) + ' \u043f.\u043f.' : na,
-    isFinite(d.spread) ? tr('vs_spread_sub') : '',
-    isFinite(d.spread) ? (d.spread >= 0 ? 'pos' : 'neg') : 'na');
+    Number.isFinite(d.spread) ? (d.spread >= 0 ? '+' : '') + _volFmt(d.spread) + ' \u043f.\u043f.' : na,
+    Number.isFinite(d.spread) ? tr('vs_spread_sub') : '',
+    Number.isFinite(d.spread) ? (d.spread >= 0 ? 'pos' : 'neg') : 'na');
 
   // Вердикт: описательный, без рекомендаций
   const vd = document.getElementById('vol-verdict');
   if (vd) {
     let rank = null, basis = 'iv';
-    if (isFinite(d.ivRank)) { rank = d.ivRank; }
-    else if (isFinite(d.hvRank)) { rank = d.hvRank; basis = 'hv'; }
+    if (Number.isFinite(d.ivRank)) { rank = d.ivRank; }
+    else if (Number.isFinite(d.hvRank)) { rank = d.hvRank; basis = 'hv'; }
     if (rank === null) {
       vd.innerHTML = '<span class="vv-badge vv-na">' + tr('vs_na') + '</span>' + tr('vs_v_none');
     } else {
@@ -7793,7 +7793,7 @@ function renderVolStats() {
   const _setAvg = function(id, v, isPct) {
     const el = document.getElementById(id);
     if (!el) return;
-    const ok = isFinite(v) && v !== null;
+    const ok = Number.isFinite(v) && v !== null;
     el.textContent = ok ? (isPct ? Math.round(v) + '%' : (Math.round(v * 10) / 10).toFixed(1)) : '\u2014';
     el.className = ok ? '' : 'va-na';
   };
@@ -7997,7 +7997,7 @@ function dnSave() {
 function dnKey() { return (S.exchange || 'bybit') + ':' + (S.asset || 'ETH'); }
 function dnAnchor() {
   const a = dnLoad().anchors[dnKey()];
-  return (a && isFinite(a.price) && a.price > 0) ? a : null;
+  return (a && Number.isFinite(a.price) && a.price > 0) ? a : null;
 }
 
 // ── Опционные ноги позиции ──
@@ -8035,7 +8035,7 @@ function dnOptGreeks(price, mode) {
     const leg = legs[i];
     const T = legRemainingT(leg, 0);
     let ivPct = leg.iv;
-    if (mode === 'atm' && isFinite(atmIv)) ivPct = atmIv;
+    if (mode === 'atm' && Number.isFinite(atmIv)) ivPct = atmIv;
     const g = bs(price, leg.strike, T, S.r, Math.max(0.01, ivPct / 100),
                  leg.type === 'option_call' ? 'call' : 'put');
     const dir = leg.direction === 'buy' ? 1 : -1;
@@ -8055,7 +8055,7 @@ function dnLinDelta() {
   return d;
 }
 
-function dnFmt(v, d) { return isFinite(v) ? v.toFixed(d === undefined ? 2 : d) : '\u2014'; }
+function dnFmt(v, d) { return Number.isFinite(v) ? v.toFixed(d === undefined ? 2 : d) : '\u2014'; }
 function dnMoney(v) { return (v >= 0 ? '+' : '\u2212') + '$' + Math.abs(v).toFixed(2); }
 
 // ── Сборка страницы ──
@@ -8080,11 +8080,11 @@ function dnRender() {
 
   // ── Волатильность: дорого или дёшево покупать ──
   const vs = (_volState && _volState.asset === S.asset) ? _volState : null;
-  const ivNow = vs && isFinite(vs.ivNow) ? vs.ivNow : dnAtmIv();
-  const hvNow = vs && isFinite(vs.hvNow) ? vs.hvNow : null;
-  const ivRank = vs && isFinite(vs.ivRank) ? vs.ivRank : null;
+  const ivNow = vs && Number.isFinite(vs.ivNow) ? vs.ivNow : dnAtmIv();
+  const hvNow = vs && Number.isFinite(vs.hvNow) ? vs.hvNow : null;
+  const ivRank = vs && Number.isFinite(vs.ivRank) ? vs.ivRank : null;
   let vBadge, vCls, vTxt;
-  if (isFinite(ivNow) && isFinite(hvNow)) {
+  if (Number.isFinite(ivNow) && Number.isFinite(hvNow)) {
     const sp = ivNow - hvNow;
     if (sp < -5)      { vBadge = tr('dn_v_cheap'); vCls = 'dn-good'; }
     else if (sp > 5)  { vBadge = tr('dn_v_rich');  vCls = 'dn-bad'; }
@@ -8102,10 +8102,10 @@ function dnRender() {
   const beMove = (og.gamma > 0 && thetaDay < 0)
     ? Math.sqrt(2 * Math.abs(thetaDay) / og.gamma) : null;      // безубыточное дневное движение, $
   const bePct = beMove ? beMove / spot * 100 : null;
-  const impliedDay = isFinite(ivNow) ? ivNow / Math.sqrt(365) : null;
+  const impliedDay = Number.isFinite(ivNow) ? ivNow / Math.sqrt(365) : null;
   // Ожидаемое число рехеджей за жизнь позиции: sigma^2*T / x^2
   let expN = null;
-  if (isFinite(ivNow) && optLegs.length) {
+  if (Number.isFinite(ivNow) && optLegs.length) {
     const T = legRemainingT(optLegs[0], 0);
     expN = Math.pow(ivNow / 100, 2) * T / (x * x);
   }
@@ -8132,7 +8132,7 @@ function dnRender() {
   html += '<div class="sc-card">';
   html += '<div class="sc-card-h">' + tr('dn_h_vol') + '</div>';
   html += '<div class="dn-verdict"><span class="dn-badge ' + vCls + '">' + vBadge + '</span><span>' + vTxt + '</span></div>';
-  html += '<div class="dn-kv"><span>' + tr('dn_ivrank') + '</span><b>' + (isFinite(ivRank) ? Math.round(ivRank) + '%' : na) + '</b></div>';
+  html += '<div class="dn-kv"><span>' + tr('dn_ivrank') + '</span><b>' + (Number.isFinite(ivRank) ? Math.round(ivRank) + '%' : na) + '</b></div>';
   html += '<div class="dn-kv"><span>' + tr('dn_be_move') + '</span><b>' + (bePct ? dnFmt(bePct, 2) + '% ($' + Math.round(beMove) + ')' : na) + '</b></div>';
   html += '<div class="dn-kv"><span>' + tr('dn_impl_move') + '</span><b>' + (impliedDay ? dnFmt(impliedDay, 2) + '%' : na) + '</b></div>';
   html += '<div class="dn-note">' + tr('dn_be_note') + '</div>';
@@ -8201,12 +8201,12 @@ function dnRender() {
 
 function dnSetStep(v) {
   const n = parseFloat(v);
-  if (!isFinite(n) || n <= 0) return;
+  if (!Number.isFinite(n) || n <= 0) return;
   dnLoad(); DN.stepPct = Math.min(50, Math.max(0.1, n)); dnSave(); dnRender();
 }
 function dnSetFee(v) {
   const n = parseFloat(v);
-  if (!isFinite(n) || n < 0) return;
+  if (!Number.isFinite(n) || n < 0) return;
   dnLoad(); DN.feePct = n; dnSave(); dnRender();
 }
 function dnSetMode(v) {
@@ -8215,12 +8215,12 @@ function dnSetMode(v) {
 function dnSetAnchor(v) {
   const n = parseFloat(v);
   dnLoad();
-  if (!isFinite(n) || n <= 0) { delete DN.anchors[dnKey()]; }
+  if (!Number.isFinite(n) || n <= 0) { delete DN.anchors[dnKey()]; }
   else { DN.anchors[dnKey()] = { price: n, ts: Date.now() }; }
   dnSave(); dnRender();
 }
 function dnSetAnchorNow() {
-  if (!isFinite(S.spotPrice) || S.spotPrice <= 0) return;
+  if (!Number.isFinite(S.spotPrice) || S.spotPrice <= 0) return;
   dnSetAnchor(S.spotPrice);
 }
 
