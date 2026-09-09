@@ -1315,6 +1315,71 @@ input[type="range"] { touch-action: none; }
 }
 #vol-avg-table td.va-na { color: var(--text3); font-weight: 400; }
 
+/* ─── v36: страницы экрана расчётов + покупка волатильности ─── */
+#sc-tabs {
+  display: flex; gap: 6px; padding: 8px 10px;
+  background: var(--bg2); border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.sc-tab {
+  flex: 1; text-align: center; cursor: pointer; user-select: none;
+  padding: 7px 6px; border-radius: 8px; font-size: 12px;
+  border: 1px solid var(--border2); background: var(--bg3); color: var(--text2);
+  transition: all .15s;
+}
+.sc-tab.active { font-weight: 700; }
+.sc-tab[data-page="0"].active { background: var(--green); border-color: var(--green); color: #06101f; }
+.sc-tab[data-page="1"].active { background: var(--accent); border-color: var(--accent); color: #06101f; }
+
+#dn-page { flex: 1; overflow-y: auto; padding: 10px; display: none; }
+#dn-page.on { display: block; }
+#sc-content.off { display: none; }
+#sc-footer.off, #dn-footer { display: none; }
+#dn-footer.on { display: flex; }
+
+.dn-verdict {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; line-height: 1.45; color: var(--text2); margin-bottom: 8px;
+}
+.dn-badge {
+  padding: 2px 9px; border-radius: 12px; font-size: 11px; font-weight: 700; flex-shrink: 0;
+}
+.dn-good { background: rgba(0,214,143,.16);  color: var(--green); }
+.dn-bad  { background: rgba(255,77,106,.16); color: var(--red); }
+.dn-neu  { background: var(--bg4);           color: var(--text3); }
+
+.dn-kv {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-size: 12px; color: var(--text3); padding: 4px 0;
+  border-bottom: 1px solid var(--border);
+}
+.dn-kv:last-child { border-bottom: none; }
+.dn-kv b { color: var(--text); font-family: var(--font); font-size: 13px; }
+.dn-kv b.pos { color: var(--green); }
+.dn-kv b.neg { color: var(--red); }
+.dn-kv .dn-sub { display: block; font-size: 9px; color: var(--text3); font-family: var(--font2); }
+
+.dn-act {
+  margin-top: 8px; padding: 9px 10px; border-radius: 8px;
+  font-size: 12px; line-height: 1.45;
+  background: var(--bg3); border: 1px solid var(--border2); color: var(--text2);
+}
+.dn-act b { color: var(--text); font-family: var(--font); }
+.dn-act.fire { border-color: var(--accent); background: rgba(240,165,0,.10); }
+
+.dn-lvl { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+.dn-lvl-box {
+  padding: 8px 10px; border-radius: 8px; text-align: center;
+  background: var(--bg3); border: 1px solid var(--border2);
+}
+.dn-lvl-box .l-t { font-size: 9px; color: var(--text3); margin-bottom: 3px; }
+.dn-lvl-box .l-p { font-family: var(--font); font-size: 14px; font-weight: 700; color: var(--text); }
+.dn-lvl-box .l-d { font-size: 9px; color: var(--text3); margin-top: 2px; }
+
+.dn-inline { display: flex; gap: 8px; }
+.dn-inline > * { flex: 1; }
+.dn-note { font-size: 10px; color: var(--text3); line-height: 1.5; margin-top: 8px; }
+.dn-empty { padding: 26px 12px; text-align: center; font-size: 12px; color: var(--text3); line-height: 1.6; }
+
 </style>
 </head>
 <body>
@@ -1985,7 +2050,18 @@ input[type="range"] { touch-action: none; }
     <button class="sc-help-btn" id="sc-help-btn" onclick="scToggleHelp()" title="Как это работает" data-i18n-title="sc_help_t">?</button>
     <button class="p-close-btn" onclick="closeStrangleCalc()" title="Закрыть">✕</button>
   </div>
-  <div id="sc-content">
+  <!-- v36: переключатель страниц (свайп влево-вправо тоже работает) -->
+  <div id="sc-tabs">
+    <div class="sc-tab active" data-page="0" onclick="scSetPage(0)" data-i18n="dn_tab_long">Покупка волатильности</div>
+    <div class="sc-tab" data-page="1" onclick="scSetPage(1)" data-i18n="dn_tab_short">Продажа волатильности</div>
+  </div>
+
+  <!-- ═══ v36: ПОКУПКА ВОЛАТИЛЬНОСТИ (дельта-нейтральный гамма-скальпинг) ═══ -->
+  <div id="dn-page" class="on">
+    <div id="dn-body"></div>
+  </div>
+
+  <div id="sc-content" class="off">
     <div id="sc-status" class="sc-status"></div>
 
     <div class="sc-card" id="sc-help">
@@ -2087,9 +2163,14 @@ input[type="range"] { touch-action: none; }
 
     <div class="sc-disclaimer" data-i18n="sc_disclaimer">Расчёт информационный, по модели Black-Scholes. Ордера ставятся вручную на бирже. Не является финансовым советом.</div>
   </div>
-  <div id="sc-footer">
+  <div id="sc-footer" class="off">
     <button class="sc-btn" onclick="closeStrangleCalc()" data-i18n="btn_close">Закрыть</button>
     <button class="sc-btn primary" onclick="scApply()" data-i18n="sc_apply">Применить на график</button>
+  </div>
+  <!-- v36: футер страницы покупки волатильности -->
+  <div id="dn-footer" class="on">
+    <button class="sc-btn" onclick="closeStrangleCalc()" data-i18n="btn_close">Закрыть</button>
+    <button class="sc-btn primary" id="dn-anchor-btn" onclick="dnSetAnchorNow()" data-i18n="dn_anchor_now">Якорь по текущей цене</button>
   </div>
 </div>
 
@@ -3932,6 +4013,9 @@ async function openStrangleCalc() {
   const m = scEl('strangle-calc-modal');
   if (!m) return;
   m.classList.add('open');
+  // v36: экран открывается на странице покупки волатильности
+  scSetPage(0);
+  loadVolStats(false).then(dnRender).catch(function(){ dnRender(); });
   scEl('sc-status').textContent = tr('sc_loading');
   SC.ready = false;
   SC.expPart = null; SC.expIso = null; SC.strikes = [];
@@ -7876,6 +7960,318 @@ function maybeShowApiBanner() {
   } catch(e) { console.warn('[api-banner]', e.message); }
 }
 
+
+// ═══════════════════════════════════════════════════
+// v36: ПОКУПКА ВОЛАТИЛЬНОСТИ — дельта-нейтральный хедж и рехедж
+//
+// Методика: Коннолли, «Покупка и продажа волатильности».
+// Рехедж по фиксированному ШАГУ ЦЕНЫ базового актива (не по времени),
+// якорь плавающий — отсчёт идёт от цены последнего рехеджа.
+// Размер шага задаётся в процентах и определяется стоимостью сделки.
+//
+// Доля издержек в собранной гамме = 2·f/x, где f — комиссия, x — шаг.
+// Гамма и время из этого отношения сокращаются, поэтому оно зависит
+// только от комиссии и шага. Ожидаемый суммарный сбор гаммы от размера
+// шага не зависит вовсе: прибыль за срабатывание растёт как ΔS²,
+// а число срабатываний падает как 1/ΔS². Меняются только издержки
+// (падают с ростом шага) и разброс результата (растёт).
+// ═══════════════════════════════════════════════════
+
+const DN_KEY = 'oa-dn-v1';
+const DN_DEF = { stepPct: 3, feePct: 0.055, deltaMode: 'chain', anchors: {} };
+let DN = null;
+let _scPage = 0;
+
+function dnLoad() {
+  if (DN) return DN;
+  try {
+    const raw = JSON.parse(localStorage.getItem(DN_KEY) || '{}');
+    DN = Object.assign({}, DN_DEF, raw);
+    if (!DN.anchors || typeof DN.anchors !== 'object') DN.anchors = {};
+  } catch(e) { DN = Object.assign({}, DN_DEF, { anchors: {} }); }
+  return DN;
+}
+function dnSave() {
+  try { localStorage.setItem(DN_KEY, JSON.stringify(DN)); } catch(e) {}
+}
+function dnKey() { return (S.exchange || 'bybit') + ':' + (S.asset || 'ETH'); }
+function dnAnchor() {
+  const a = dnLoad().anchors[dnKey()];
+  return (a && isFinite(a.price) && a.price > 0) ? a : null;
+}
+
+// ── Опционные ноги позиции ──
+function dnOptLegs() {
+  return (S.legs || []).filter(function(l){
+    return (l.type === 'option_call' || l.type === 'option_put') && !isLegExpiredAt(l, 0);
+  });
+}
+function dnLinLegs() {
+  return (S.legs || []).filter(function(l){ return l.type === 'perp' || l.type === 'future'; });
+}
+
+// ── IV ближайшей к деньгам ноги: ею считаем дельту в режиме «единая ATM IV» ──
+function dnAtmIv() {
+  const legs = dnOptLegs();
+  if (!legs.length) return null;
+  const spot = S.spotPrice;
+  let best = null, bestD = Infinity;
+  for (let i = 0; i < legs.length; i++) {
+    const d = Math.abs(legs[i].strike - spot);
+    if (d < bestD) { bestD = d; best = legs[i]; }
+  }
+  return best ? best.iv : null;
+}
+
+// ── Греки опционной части при заданной цене ──
+// mode 'chain' — у каждой ноги своя IV с улыбки (как отдаёт биржа).
+// mode 'atm'   — единая IV ближайшего к деньгам страйка: чистая
+//                чувствительность к цене, без вклада скоса.
+function dnOptGreeks(price, mode) {
+  const legs = dnOptLegs();
+  const atmIv = dnAtmIv();
+  let delta = 0, gamma = 0, vega = 0, theta = 0;
+  for (let i = 0; i < legs.length; i++) {
+    const leg = legs[i];
+    const T = legRemainingT(leg, 0);
+    let ivPct = leg.iv;
+    if (mode === 'atm' && isFinite(atmIv)) ivPct = atmIv;
+    const g = bs(price, leg.strike, T, S.r, Math.max(0.01, ivPct / 100),
+                 leg.type === 'option_call' ? 'call' : 'put');
+    const dir = leg.direction === 'buy' ? 1 : -1;
+    delta += dir * g.delta * leg.qty;
+    gamma += dir * g.gamma * leg.qty;
+    vega  += dir * g.vega  * leg.qty;
+    theta += dir * g.theta * leg.qty;
+  }
+  return { delta: delta, gamma: gamma, vega: vega, theta: theta };
+}
+
+// ── Линейная часть (фьючерсы и перпы) ──
+function dnLinDelta() {
+  const legs = dnLinLegs();
+  let d = 0;
+  for (let i = 0; i < legs.length; i++) d += (legs[i].direction === 'buy' ? 1 : -1) * legs[i].qty;
+  return d;
+}
+
+function dnFmt(v, d) { return isFinite(v) ? v.toFixed(d === undefined ? 2 : d) : '\u2014'; }
+function dnMoney(v) { return (v >= 0 ? '+' : '\u2212') + '$' + Math.abs(v).toFixed(2); }
+
+// ── Сборка страницы ──
+function dnRender() {
+  const box = document.getElementById('dn-body');
+  if (!box) return;
+  dnLoad();
+
+  const optLegs = dnOptLegs();
+  if (!optLegs.length) {
+    box.innerHTML = '<div class="dn-empty">' + tr('dn_empty') + '</div>';
+    return;
+  }
+
+  const spot = S.spotPrice;
+  const mode = DN.deltaMode;
+  const og = dnOptGreeks(spot, mode);
+  const linD = dnLinDelta();
+  const netD = og.delta + linD;
+  const needHedge = -og.delta;           // сколько должно быть в линейной ноге
+  const adjust = needHedge - linD;       // сколько докупить (+) или продать (−) сейчас
+
+  // ── Волатильность: дорого или дёшево покупать ──
+  const vs = (_volState && _volState.asset === S.asset) ? _volState : null;
+  const ivNow = vs && isFinite(vs.ivNow) ? vs.ivNow : dnAtmIv();
+  const hvNow = vs && isFinite(vs.hvNow) ? vs.hvNow : null;
+  const ivRank = vs && isFinite(vs.ivRank) ? vs.ivRank : null;
+  let vBadge, vCls, vTxt;
+  if (isFinite(ivNow) && isFinite(hvNow)) {
+    const sp = ivNow - hvNow;
+    if (sp < -5)      { vBadge = tr('dn_v_cheap'); vCls = 'dn-good'; }
+    else if (sp > 5)  { vBadge = tr('dn_v_rich');  vCls = 'dn-bad'; }
+    else              { vBadge = tr('dn_v_fair');  vCls = 'dn-neu'; }
+    vTxt = tr('dn_v_txt', { iv: dnFmt(ivNow, 1), hv: dnFmt(hvNow, 1), sp: (sp >= 0 ? '+' : '') + dnFmt(sp, 1) });
+  } else {
+    vBadge = tr('vs_na'); vCls = 'dn-neu'; vTxt = tr('dn_v_none');
+  }
+
+  // ── Экономика ──
+  const stepPct = DN.stepPct, feePct = DN.feePct;
+  const x = stepPct / 100;
+  const costShare = (2 * feePct) / stepPct * 100;              // доля издержек в собранной гамме, %
+  const thetaDay = og.theta;                                    // $/день, обычно отрицательная
+  const beMove = (og.gamma > 0 && thetaDay < 0)
+    ? Math.sqrt(2 * Math.abs(thetaDay) / og.gamma) : null;      // безубыточное дневное движение, $
+  const bePct = beMove ? beMove / spot * 100 : null;
+  const impliedDay = isFinite(ivNow) ? ivNow / Math.sqrt(365) : null;
+  // Ожидаемое число рехеджей за жизнь позиции: sigma^2*T / x^2
+  let expN = null;
+  if (isFinite(ivNow) && optLegs.length) {
+    const T = legRemainingT(optLegs[0], 0);
+    expN = Math.pow(ivNow / 100, 2) * T / (x * x);
+  }
+
+  // ── Рехедж ──
+  const a = dnAnchor();
+  const anchorPrice = a ? a.price : null;
+  let up = null, dn_ = null, dist = null, fired = false, nextAdj = null;
+  if (anchorPrice) {
+    up = anchorPrice * (1 + x);
+    dn_ = anchorPrice * (1 - x);
+    const move = (spot - anchorPrice) / anchorPrice;
+    fired = Math.abs(move) >= x;
+    dist = Math.min(Math.abs(spot - up), Math.abs(spot - dn_));
+    const trig = spot >= anchorPrice ? up : dn_;
+    const gTrig = dnOptGreeks(fired ? spot : trig, mode);
+    nextAdj = (-gTrig.delta) - linD;
+  }
+
+  const na = '\u2014';
+  let html = '';
+
+  // 1 · Стоит ли покупать
+  html += '<div class="sc-card">';
+  html += '<div class="sc-card-h">' + tr('dn_h_vol') + '</div>';
+  html += '<div class="dn-verdict"><span class="dn-badge ' + vCls + '">' + vBadge + '</span><span>' + vTxt + '</span></div>';
+  html += '<div class="dn-kv"><span>' + tr('dn_ivrank') + '</span><b>' + (isFinite(ivRank) ? Math.round(ivRank) + '%' : na) + '</b></div>';
+  html += '<div class="dn-kv"><span>' + tr('dn_be_move') + '</span><b>' + (bePct ? dnFmt(bePct, 2) + '% ($' + Math.round(beMove) + ')' : na) + '</b></div>';
+  html += '<div class="dn-kv"><span>' + tr('dn_impl_move') + '</span><b>' + (impliedDay ? dnFmt(impliedDay, 2) + '%' : na) + '</b></div>';
+  html += '<div class="dn-note">' + tr('dn_be_note') + '</div>';
+  html += '</div>';
+
+  // 2 · Дельта и хедж
+  html += '<div class="sc-card">';
+  html += '<div class="sc-card-h">' + tr('dn_h_hedge') + '</div>';
+  html += '<div class="sc-row"><label class="sc-lab">' + tr('dn_dmode') + '</label>';
+  html += '<select class="sc-select" onchange="dnSetMode(this.value)">';
+  html += '<option value="chain"' + (mode === 'chain' ? ' selected' : '') + '>' + tr('dn_dmode_chain') + '</option>';
+  html += '<option value="atm"' + (mode === 'atm' ? ' selected' : '') + '>' + tr('dn_dmode_atm') + '</option>';
+  html += '</select></div>';
+  html += '<div class="dn-kv"><span>' + tr('dn_opt_delta') + '</span><b>' + dnFmt(og.delta, 4) + '</b></div>';
+  html += '<div class="dn-kv"><span>' + tr('dn_lin_delta') + '</span><b>' + dnFmt(linD, 4) + '</b></div>';
+  html += '<div class="dn-kv"><span>' + tr('dn_net_delta') + '</span><b class="' + (Math.abs(netD) < 0.01 ? 'pos' : 'neg') + '">' + dnFmt(netD, 4) + '</b></div>';
+  html += '<div class="dn-kv"><span>' + tr('dn_gamma') + '</span><b>' + dnFmt(og.gamma, 4) + '</b></div>';
+  html += '<div class="dn-kv"><span>' + tr('dn_theta') + '</span><b class="neg">' + dnFmt(thetaDay, 2) + '</b></div>';
+  html += '<div class="dn-act">' + (Math.abs(adjust) < 0.005
+      ? tr('dn_hedge_ok')
+      : tr(adjust > 0 ? 'dn_hedge_buy' : 'dn_hedge_sell', { q: Math.abs(adjust).toFixed(3), a: S.asset })) + '</div>';
+  html += '</div>';
+
+  // 3 · Рехедж
+  html += '<div class="sc-card">';
+  html += '<div class="sc-card-h">' + tr('dn_h_rehedge') + '</div>';
+  html += '<div class="dn-inline">';
+  html += '<div class="sc-row"><label class="sc-lab">' + tr('dn_step') + '</label>' +
+          '<input type="number" class="sc-input" id="dn-step" value="' + stepPct + '" min="0.1" max="50" step="0.1" onchange="dnSetStep(this.value)"></div>';
+  html += '<div class="sc-row"><label class="sc-lab">' + tr('dn_fee') + '</label>' +
+          '<input type="number" class="sc-input" id="dn-fee" value="' + feePct + '" min="0" max="1" step="0.005" onchange="dnSetFee(this.value)"></div>';
+  html += '</div>';
+  html += '<div class="sc-row"><label class="sc-lab">' + tr('dn_anchor') + '</label>' +
+          '<input type="number" class="sc-input" id="dn-anchor" value="' + (anchorPrice ? Math.round(anchorPrice * 100) / 100 : '') +
+          '" step="0.01" placeholder="' + tr('dn_anchor_ph') + '" onchange="dnSetAnchor(this.value)"></div>';
+  if (anchorPrice) {
+    html += '<div class="dn-lvl">';
+    html += '<div class="dn-lvl-box"><div class="l-t">' + tr('dn_lvl_dn') + '</div><div class="l-p">$' + Math.round(dn_) + '</div>' +
+            '<div class="l-d">' + dnFmt((dn_ - spot) / spot * 100, 2) + '%</div></div>';
+    html += '<div class="dn-lvl-box"><div class="l-t">' + tr('dn_lvl_up') + '</div><div class="l-p">$' + Math.round(up) + '</div>' +
+            '<div class="l-d">+' + dnFmt((up - spot) / spot * 100, 2) + '%</div></div>';
+    html += '</div>';
+    html += '<div class="dn-act' + (fired ? ' fire' : '') + '">' +
+            (fired
+              ? tr('dn_fired', { q: Math.abs(nextAdj).toFixed(3), a: S.asset, d: tr(nextAdj > 0 ? 'dn_buy' : 'dn_sell') })
+              : tr('dn_waiting', { d: '$' + Math.round(dist), q: Math.abs(nextAdj).toFixed(3), a: S.asset })) +
+            '</div>';
+  } else {
+    html += '<div class="dn-act">' + tr('dn_no_anchor') + '</div>';
+  }
+  html += '</div>';
+
+  // 4 · Экономика шага
+  html += '<div class="sc-card">';
+  html += '<div class="sc-card-h">' + tr('dn_h_econ') + '</div>';
+  html += '<div class="dn-kv"><span>' + tr('dn_cost_share') + '<span class="dn-sub">2\u00b7' + feePct + '% / ' + stepPct + '%</span></span><b class="' +
+          (costShare < 10 ? 'pos' : 'neg') + '">' + dnFmt(costShare, 1) + '%</b></div>';
+  html += '<div class="dn-kv"><span>' + tr('dn_step_abs') + '</span><b>$' + Math.round(spot * x) + '</b></div>';
+  html += '<div class="dn-kv"><span>' + tr('dn_exp_n') + '</span><b>' + (expN ? Math.round(expN) : na) + '</b></div>';
+  html += '<div class="dn-kv"><span>' + tr('dn_gain_per') + '</span><b>' + (og.gamma > 0 ? dnMoney(0.5 * og.gamma * Math.pow(spot * x, 2)) : na) + '</b></div>';
+  html += '<div class="dn-note">' + tr('dn_econ_note') + '</div>';
+  html += '</div>';
+
+  box.innerHTML = html;
+}
+
+function dnSetStep(v) {
+  const n = parseFloat(v);
+  if (!isFinite(n) || n <= 0) return;
+  dnLoad(); DN.stepPct = Math.min(50, Math.max(0.1, n)); dnSave(); dnRender();
+}
+function dnSetFee(v) {
+  const n = parseFloat(v);
+  if (!isFinite(n) || n < 0) return;
+  dnLoad(); DN.feePct = n; dnSave(); dnRender();
+}
+function dnSetMode(v) {
+  dnLoad(); DN.deltaMode = (v === 'atm') ? 'atm' : 'chain'; dnSave(); dnRender();
+}
+function dnSetAnchor(v) {
+  const n = parseFloat(v);
+  dnLoad();
+  if (!isFinite(n) || n <= 0) { delete DN.anchors[dnKey()]; }
+  else { DN.anchors[dnKey()] = { price: n, ts: Date.now() }; }
+  dnSave(); dnRender();
+}
+function dnSetAnchorNow() {
+  if (!isFinite(S.spotPrice) || S.spotPrice <= 0) return;
+  dnSetAnchor(S.spotPrice);
+}
+
+// ── Переключение страниц ──
+function scSetPage(i) {
+  _scPage = (i === 1) ? 1 : 0;
+  const dn = document.getElementById('dn-page');
+  const sc = document.getElementById('sc-content');
+  const fd = document.getElementById('dn-footer');
+  const fs = document.getElementById('sc-footer');
+  if (dn) dn.classList.toggle('on', _scPage === 0);
+  if (sc) sc.classList.toggle('off', _scPage === 0);
+  if (fd) fd.classList.toggle('on', _scPage === 0);
+  if (fs) fs.classList.toggle('off', _scPage === 0);
+  const tabs = document.querySelectorAll('#sc-tabs .sc-tab');
+  for (let k = 0; k < tabs.length; k++) {
+    tabs[k].classList.toggle('active', parseInt(tabs[k].getAttribute('data-page'), 10) === _scPage);
+  }
+  if (_scPage === 0) dnRender();
+}
+
+// ── Свайп между страницами ──
+// Порог по горизонтали с запасом над вертикалью, чтобы не мешать прокрутке.
+// Жесты на полях ввода и селектах игнорируются.
+(function initScSwipe() {
+  let x0 = null, y0 = null, t0 = 0;
+  function isControl(el) {
+    while (el && el !== document.body) {
+      const tag = (el.tagName || '').toLowerCase();
+      if (tag === 'input' || tag === 'select' || tag === 'textarea' || tag === 'button') return true;
+      el = el.parentElement;
+    }
+    return false;
+  }
+  document.addEventListener('touchstart', function(e) {
+    const m = document.getElementById('strangle-calc-modal');
+    if (!m || !m.classList.contains('open')) return;
+    if (isControl(e.target)) { x0 = null; return; }
+    x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; t0 = Date.now();
+  }, { passive: true });
+  document.addEventListener('touchend', function(e) {
+    if (x0 === null) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - x0, dy = t.clientY - y0;
+    x0 = null;
+    if (Date.now() - t0 > 700) return;
+    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.6) return;
+    scSetPage(dx < 0 ? 1 : 0);
+  }, { passive: true });
+})();
+
 // PRICE ALERTS
 // ═══════════════════════════════════════════════════
 
@@ -9077,6 +9473,51 @@ const I18N = {
   en: {
     t_balance:"Balance / Available", t_dhedge:"Delta hedging", t_alerts:"Price alerts",
     t_theme:"Switch theme", t_rotate:"Rotate screen", t_about:"About & legal info",
+    // v36: buying volatility
+    dn_tab_long:"Buying volatility",
+    dn_tab_short:"Selling volatility",
+    dn_empty:"No option legs in the position.\nAdd a leg on the main screen \u2014 the hedge and the rehedge levels are computed from it.",
+    dn_h_vol:"1 \u00b7 Is volatility worth buying",
+    dn_h_hedge:"2 \u00b7 Delta and hedge",
+    dn_h_rehedge:"3 \u00b7 Rehedging",
+    dn_h_econ:"4 \u00b7 Economics of the step",
+    dn_v_cheap:"Cheap",
+    dn_v_rich:"Expensive",
+    dn_v_fair:"Fair",
+    dn_v_txt:"IV {iv}% against HV {hv}%, spread {sp} pp. Buying volatility pays off only if realised volatility comes out above implied.",
+    dn_v_none:"Not enough data to compare implied and realised volatility. Open the IV rank screen to load it.",
+    dn_ivrank:"IV rank (1y)",
+    dn_be_move:"Break-even daily move",
+    dn_impl_move:"Implied daily move",
+    dn_be_note:"The daily P&L of a hedged position is about \u00bd\u00b7\u0393\u00b7(\u0394S)\u00b2 \u2212 |\u0398|. The break-even move is where gamma exactly covers theta; below it the position bleeds.",
+    dn_dmode:"Delta measured by",
+    dn_dmode_chain:"Each leg\u2019s own IV (as the exchange gives it)",
+    dn_dmode_atm:"A single ATM IV for all legs",
+    dn_opt_delta:"Option delta",
+    dn_lin_delta:"Futures / perp delta",
+    dn_net_delta:"Net delta",
+    dn_gamma:"Gamma",
+    dn_theta:"Theta, per day",
+    dn_hedge_ok:"The position is delta-neutral, nothing to adjust.",
+    dn_hedge_buy:"To neutralise now: <b>buy {q} {a}</b> in the linear leg.",
+    dn_hedge_sell:"To neutralise now: <b>sell {q} {a}</b> in the linear leg.",
+    dn_step:"Step, %",
+    dn_fee:"Taker fee, %",
+    dn_anchor:"Anchor \u2014 price of the last rehedge",
+    dn_anchor_ph:"not set",
+    dn_anchor_now:"Anchor at current price",
+    dn_lvl_dn:"Trigger below",
+    dn_lvl_up:"Trigger above",
+    dn_no_anchor:"Set the anchor \u2014 the price at which you last levelled the delta. The triggers are counted from it, and after every rehedge the anchor moves to the new price.",
+    dn_waiting:"{d} left to the nearest trigger. On it: about <b>{q} {a}</b>.",
+    dn_fired:"Trigger reached. <b>{d} {q} {a}</b>, then move the anchor to the current price.",
+    dn_buy:"Buy",
+    dn_sell:"Sell",
+    dn_cost_share:"Fees as a share of collected gamma",
+    dn_step_abs:"Step in money",
+    dn_exp_n:"Expected rehedges until expiry",
+    dn_gain_per:"Gamma per trigger",
+    dn_econ_note:"The expected total gamma collected does not depend on the step: the profit per trigger grows as \u0394S\u00b2 while the number of triggers falls as 1/\u0394S\u00b2. What the step does change is the fee share (falls as the step widens) and the spread of the outcome (grows).",
     // v35.1: IV rank windows
     btn_ivrank:"IV rank",
     vs_avg_head:"IV index (DVOL): average over the period and rank against that period",
@@ -9379,6 +9820,51 @@ const I18N = {
   ru: {
     t_balance:"\u0411\u0430\u043b\u0430\u043d\u0441 / \u0414\u043e\u0441\u0442\u0443\u043f\u043d\u043e", t_dhedge:"\u0414\u0435\u043b\u044c\u0442\u0430-\u0445\u0435\u0434\u0436\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u0435", t_alerts:"\u0410\u043b\u0435\u0440\u0442\u044b \u043f\u043e \u0446\u0435\u043d\u0435",
     t_theme:"\u0421\u043c\u0435\u043d\u0438\u0442\u044c \u0442\u0435\u043c\u0443", t_rotate:"\u041f\u043e\u0432\u0435\u0440\u043d\u0443\u0442\u044c \u044d\u043a\u0440\u0430\u043d", t_about:"\u041e \u043f\u0440\u0438\u043b\u043e\u0436\u0435\u043d\u0438\u0438 \u0438 \u044e\u0440\u0438\u0434\u0438\u0447\u0435\u0441\u043a\u0430\u044f \u0438\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0438\u044f",
+    // v36: pokupka volatilnosti
+    dn_tab_long:"\u041f\u043e\u043a\u0443\u043f\u043a\u0430 \u0432\u043e\u043b\u0430\u0442\u0438\u043b\u044c\u043d\u043e\u0441\u0442\u0438",
+    dn_tab_short:"\u041f\u0440\u043e\u0434\u0430\u0436\u0430 \u0432\u043e\u043b\u0430\u0442\u0438\u043b\u044c\u043d\u043e\u0441\u0442\u0438",
+    dn_empty:"\u0412 \u043f\u043e\u0437\u0438\u0446\u0438\u0438 \u043d\u0435\u0442 \u043e\u043f\u0446\u0438\u043e\u043d\u043d\u044b\u0445 \u043d\u043e\u0433.\n\u0414\u043e\u0431\u0430\u0432\u044c \u043d\u043e\u0433\u0443 \u043d\u0430 \u0433\u043b\u0430\u0432\u043d\u043e\u043c \u044d\u043a\u0440\u0430\u043d\u0435 \u2014 \u0445\u0435\u0434\u0436 \u0438 \u0443\u0440\u043e\u0432\u043d\u0438 \u0440\u0435\u0445\u0435\u0434\u0436\u0430 \u0441\u0447\u0438\u0442\u0430\u044e\u0442\u0441\u044f \u043e\u0442 \u043d\u0435\u0451.",
+    dn_h_vol:"1 \u00b7 \u0421\u0442\u043e\u0438\u0442 \u043b\u0438 \u043f\u043e\u043a\u0443\u043f\u0430\u0442\u044c \u0432\u043e\u043b\u0430\u0442\u0438\u043b\u044c\u043d\u043e\u0441\u0442\u044c",
+    dn_h_hedge:"2 \u00b7 \u0414\u0435\u043b\u044c\u0442\u0430 \u0438 \u0445\u0435\u0434\u0436",
+    dn_h_rehedge:"3 \u00b7 \u0420\u0435\u0445\u0435\u0434\u0436",
+    dn_h_econ:"4 \u00b7 \u042d\u043a\u043e\u043d\u043e\u043c\u0438\u043a\u0430 \u0448\u0430\u0433\u0430",
+    dn_v_cheap:"\u0414\u0451\u0448\u0435\u0432\u043e",
+    dn_v_rich:"\u0414\u043e\u0440\u043e\u0433\u043e",
+    dn_v_fair:"\u0421\u043f\u0440\u0430\u0432\u0435\u0434\u043b\u0438\u0432\u043e",
+    dn_v_txt:"IV {iv}% \u043f\u0440\u043e\u0442\u0438\u0432 HV {hv}%, \u0441\u043f\u0440\u0435\u0434 {sp} \u043f.\u043f. \u041f\u043e\u043a\u0443\u043f\u043a\u0430 \u0432\u043e\u043b\u0430\u0442\u0438\u043b\u044c\u043d\u043e\u0441\u0442\u0438 \u043e\u043a\u0443\u043f\u0430\u0435\u0442\u0441\u044f \u0442\u043e\u043b\u044c\u043a\u043e \u0435\u0441\u043b\u0438 \u0440\u0435\u0430\u043b\u0438\u0437\u043e\u0432\u0430\u043d\u043d\u0430\u044f \u0432\u043e\u043b\u0430\u0442\u0438\u043b\u044c\u043d\u043e\u0441\u0442\u044c \u043e\u043a\u0430\u0436\u0435\u0442\u0441\u044f \u0432\u044b\u0448\u0435 \u043e\u0436\u0438\u0434\u0430\u0435\u043c\u043e\u0439.",
+    dn_v_none:"\u0414\u0430\u043d\u043d\u044b\u0445 \u0434\u043b\u044f \u0441\u0440\u0430\u0432\u043d\u0435\u043d\u0438\u044f \u043e\u0436\u0438\u0434\u0430\u0435\u043c\u043e\u0439 \u0438 \u0440\u0435\u0430\u043b\u0438\u0437\u043e\u0432\u0430\u043d\u043d\u043e\u0439 \u0432\u043e\u043b\u0430\u0442\u0438\u043b\u044c\u043d\u043e\u0441\u0442\u0438 \u043d\u0435\u0442. \u041e\u0442\u043a\u0440\u043e\u0439 \u044d\u043a\u0440\u0430\u043d IV rank, \u0447\u0442\u043e\u0431\u044b \u043e\u043d\u0438 \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u043b\u0438\u0441\u044c.",
+    dn_ivrank:"IV rank (1\u0433)",
+    dn_be_move:"\u0411\u0435\u0437\u0443\u0431\u044b\u0442\u043e\u0447\u043d\u043e\u0435 \u0434\u043d\u0435\u0432\u043d\u043e\u0435 \u0434\u0432\u0438\u0436\u0435\u043d\u0438\u0435",
+    dn_impl_move:"\u041e\u0436\u0438\u0434\u0430\u0435\u043c\u043e\u0435 \u0434\u043d\u0435\u0432\u043d\u043e\u0435 \u0434\u0432\u0438\u0436\u0435\u043d\u0438\u0435",
+    dn_be_note:"\u0414\u043d\u0435\u0432\u043d\u043e\u0439 P&L \u0437\u0430\u0445\u0435\u0434\u0436\u0438\u0440\u043e\u0432\u0430\u043d\u043d\u043e\u0439 \u043f\u043e\u0437\u0438\u0446\u0438\u0438 \u2248 \u00bd\u00b7\u0393\u00b7(\u0394S)\u00b2 \u2212 |\u0398|. \u0411\u0435\u0437\u0443\u0431\u044b\u0442\u043e\u0447\u043d\u043e\u0435 \u0434\u0432\u0438\u0436\u0435\u043d\u0438\u0435 \u2014 \u0442\u043e, \u043f\u0440\u0438 \u043a\u043e\u0442\u043e\u0440\u043e\u043c \u0433\u0430\u043c\u043c\u0430 \u0440\u043e\u0432\u043d\u043e \u043f\u043e\u043a\u0440\u044b\u0432\u0430\u0435\u0442 \u0442\u0435\u0442\u0443; \u043d\u0438\u0436\u0435 \u043d\u0435\u0433\u043e \u043f\u043e\u0437\u0438\u0446\u0438\u044f \u0442\u0435\u0440\u044f\u0435\u0442.",
+    dn_dmode:"\u0414\u0435\u043b\u044c\u0442\u0430 \u0441\u0447\u0438\u0442\u0430\u0435\u0442\u0441\u044f",
+    dn_dmode_chain:"\u041f\u043e \u0441\u0432\u043e\u0435\u0439 IV \u043a\u0430\u0436\u0434\u043e\u0439 \u043d\u043e\u0433\u0438 (\u043a\u0430\u043a \u043e\u0442\u0434\u0430\u0451\u0442 \u0431\u0438\u0440\u0436\u0430)",
+    dn_dmode_atm:"\u041f\u043e \u0435\u0434\u0438\u043d\u043e\u0439 ATM IV \u0434\u043b\u044f \u0432\u0441\u0435\u0445 \u043d\u043e\u0433",
+    dn_opt_delta:"\u0414\u0435\u043b\u044c\u0442\u0430 \u043e\u043f\u0446\u0438\u043e\u043d\u043e\u0432",
+    dn_lin_delta:"\u0414\u0435\u043b\u044c\u0442\u0430 \u0444\u044c\u044e\u0447\u0435\u0440\u0441\u0430 / \u043f\u0435\u0440\u043f\u0430",
+    dn_net_delta:"\u0421\u0443\u043c\u043c\u0430\u0440\u043d\u0430\u044f \u0434\u0435\u043b\u044c\u0442\u0430",
+    dn_gamma:"\u0413\u0430\u043c\u043c\u0430",
+    dn_theta:"\u0422\u0435\u0442\u0430, \u0432 \u0434\u0435\u043d\u044c",
+    dn_hedge_ok:"\u041f\u043e\u0437\u0438\u0446\u0438\u044f \u0434\u0435\u043b\u044c\u0442\u0430-\u043d\u0435\u0439\u0442\u0440\u0430\u043b\u044c\u043d\u0430, \u0434\u043e\u0432\u043e\u0434\u0438\u0442\u044c \u043d\u0435\u0447\u0435\u0433\u043e.",
+    dn_hedge_buy:"\u0427\u0442\u043e\u0431\u044b \u0432\u044b\u0439\u0442\u0438 \u0432 \u043d\u043e\u043b\u044c \u0441\u0435\u0439\u0447\u0430\u0441: <b>\u043a\u0443\u043f\u0438\u0442\u044c {q} {a}</b> \u0432 \u043b\u0438\u043d\u0435\u0439\u043d\u043e\u0439 \u043d\u043e\u0433\u0435.",
+    dn_hedge_sell:"\u0427\u0442\u043e\u0431\u044b \u0432\u044b\u0439\u0442\u0438 \u0432 \u043d\u043e\u043b\u044c \u0441\u0435\u0439\u0447\u0430\u0441: <b>\u043f\u0440\u043e\u0434\u0430\u0442\u044c {q} {a}</b> \u0432 \u043b\u0438\u043d\u0435\u0439\u043d\u043e\u0439 \u043d\u043e\u0433\u0435.",
+    dn_step:"\u0428\u0430\u0433, %",
+    dn_fee:"\u041a\u043e\u043c\u0438\u0441\u0441\u0438\u044f \u0442\u0435\u0439\u043a\u0435\u0440\u0430, %",
+    dn_anchor:"\u042f\u043a\u043e\u0440\u044c \u2014 \u0446\u0435\u043d\u0430 \u043f\u043e\u0441\u043b\u0435\u0434\u043d\u0435\u0433\u043e \u0440\u0435\u0445\u0435\u0434\u0436\u0430",
+    dn_anchor_ph:"\u043d\u0435 \u0437\u0430\u0434\u0430\u043d",
+    dn_anchor_now:"\u042f\u043a\u043e\u0440\u044c \u043f\u043e \u0442\u0435\u043a\u0443\u0449\u0435\u0439 \u0446\u0435\u043d\u0435",
+    dn_lvl_dn:"\u0421\u0440\u0430\u0431\u043e\u0442\u043a\u0430 \u0432\u043d\u0438\u0437",
+    dn_lvl_up:"\u0421\u0440\u0430\u0431\u043e\u0442\u043a\u0430 \u0432\u0432\u0435\u0440\u0445",
+    dn_no_anchor:"\u0417\u0430\u0434\u0430\u0439 \u044f\u043a\u043e\u0440\u044c \u2014 \u0446\u0435\u043d\u0443, \u043d\u0430 \u043a\u043e\u0442\u043e\u0440\u043e\u0439 \u0442\u044b \u0432 \u043f\u043e\u0441\u043b\u0435\u0434\u043d\u0438\u0439 \u0440\u0430\u0437 \u0432\u044b\u0440\u043e\u0432\u043d\u044f\u043b \u0434\u0435\u043b\u044c\u0442\u0443. \u041e\u0442 \u043d\u0435\u0451 \u043e\u0442\u0441\u0447\u0438\u0442\u044b\u0432\u0430\u044e\u0442\u0441\u044f \u0441\u0440\u0430\u0431\u043e\u0442\u043a\u0438, \u0438 \u043f\u043e\u0441\u043b\u0435 \u043a\u0430\u0436\u0434\u043e\u0433\u043e \u0440\u0435\u0445\u0435\u0434\u0436\u0430 \u044f\u043a\u043e\u0440\u044c \u043f\u0435\u0440\u0435\u0435\u0437\u0436\u0430\u0435\u0442 \u043d\u0430 \u043d\u043e\u0432\u0443\u044e \u0446\u0435\u043d\u0443.",
+    dn_waiting:"\u0414\u043e \u0431\u043b\u0438\u0436\u0430\u0439\u0448\u0435\u0439 \u0441\u0440\u0430\u0431\u043e\u0442\u043a\u0438 {d}. \u041d\u0430 \u043d\u0435\u0439 \u043f\u043e\u0442\u0440\u0435\u0431\u0443\u0435\u0442\u0441\u044f \u043e\u043a\u043e\u043b\u043e <b>{q} {a}</b>.",
+    dn_fired:"\u0421\u0440\u0430\u0431\u043e\u0442\u043a\u0430 \u0434\u043e\u0441\u0442\u0438\u0433\u043d\u0443\u0442\u0430. <b>{d} {q} {a}</b>, \u0437\u0430\u0442\u0435\u043c \u043f\u0435\u0440\u0435\u043d\u0435\u0441\u0438 \u044f\u043a\u043e\u0440\u044c \u043d\u0430 \u0442\u0435\u043a\u0443\u0449\u0443\u044e \u0446\u0435\u043d\u0443.",
+    dn_buy:"\u041a\u0443\u043f\u0438",
+    dn_sell:"\u041f\u0440\u043e\u0434\u0430\u0439",
+    dn_cost_share:"\u0414\u043e\u043b\u044f \u0438\u0437\u0434\u0435\u0440\u0436\u0435\u043a \u0432 \u0441\u043e\u0431\u0440\u0430\u043d\u043d\u043e\u0439 \u0433\u0430\u043c\u043c\u0435",
+    dn_step_abs:"\u0428\u0430\u0433 \u0432 \u0434\u0435\u043d\u044c\u0433\u0430\u0445",
+    dn_exp_n:"\u041e\u0436\u0438\u0434\u0430\u0435\u043c\u043e \u0440\u0435\u0445\u0435\u0434\u0436\u0435\u0439 \u0434\u043e \u044d\u043a\u0441\u043f\u0438\u0440\u0430\u0446\u0438\u0438",
+    dn_gain_per:"\u0413\u0430\u043c\u043c\u0430 \u0437\u0430 \u043e\u0434\u043d\u0443 \u0441\u0440\u0430\u0431\u043e\u0442\u043a\u0443",
+    dn_econ_note:"\u041e\u0436\u0438\u0434\u0430\u0435\u043c\u044b\u0439 \u0441\u0443\u043c\u043c\u0430\u0440\u043d\u044b\u0439 \u0441\u0431\u043e\u0440 \u0433\u0430\u043c\u043c\u044b \u043e\u0442 \u0448\u0430\u0433\u0430 \u043d\u0435 \u0437\u0430\u0432\u0438\u0441\u0438\u0442: \u043f\u0440\u0438\u0431\u044b\u043b\u044c \u0437\u0430 \u0441\u0440\u0430\u0431\u043e\u0442\u043a\u0443 \u0440\u0430\u0441\u0442\u0451\u0442 \u043a\u0430\u043a \u0394S\u00b2, \u0430 \u0447\u0438\u0441\u043b\u043e \u0441\u0440\u0430\u0431\u043e\u0442\u043e\u043a \u043f\u0430\u0434\u0430\u0435\u0442 \u043a\u0430\u043a 1/\u0394S\u00b2. \u041e\u0442 \u0448\u0430\u0433\u0430 \u0437\u0430\u0432\u0438\u0441\u044f\u0442 \u0434\u0440\u0443\u0433\u0438\u0435 \u0434\u0432\u0435 \u0432\u0435\u0449\u0438: \u0434\u043e\u043b\u044f \u0438\u0437\u0434\u0435\u0440\u0436\u0435\u043a (\u043f\u0430\u0434\u0430\u0435\u0442 \u0441 \u0440\u043e\u0441\u0442\u043e\u043c \u0448\u0430\u0433\u0430) \u0438 \u0440\u0430\u0437\u0431\u0440\u043e\u0441 \u0440\u0435\u0437\u0443\u043b\u044c\u0442\u0430\u0442\u0430 (\u0440\u0430\u0441\u0442\u0451\u0442).",
     // v35.1: okna IV rank
     btn_ivrank:"IV rank",
     vs_avg_head:"\u0418\u043d\u0434\u0435\u043a\u0441 IV (DVOL): \u0441\u0440\u0435\u0434\u043d\u0435\u0435 \u0437\u0430 \u043f\u0435\u0440\u0438\u043e\u0434 \u0438 rank \u043e\u0442\u043d\u043e\u0441\u0438\u0442\u0435\u043b\u044c\u043d\u043e \u044d\u0442\u043e\u0433\u043e \u0436\u0435 \u043f\u0435\u0440\u0438\u043e\u0434\u0430",
