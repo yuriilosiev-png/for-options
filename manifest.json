@@ -1,7 +1,7 @@
 {
-  "name": "Options Analyst",
-  "short_name": "Options",
-  "description": "Options P&L Analyzer for Bybit & Deribit",
+  "name": "PnL Journal",
+  "short_name": "PnL",
+  "description": "Trade journal for options and futures: win rate, profit factor, P&L",
   "start_url": "./index.html",
   "scope": "./",
   "display": "fullscreen",
