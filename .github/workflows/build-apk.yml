@@ -21,8 +21,12 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
+      # Пакет tools Google убрал из репозитория SDK в сентябре 2026, а действие
+      # по умолчанию просит "tools platform-tools" и падает. Указываем явно.
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
       - name: Install Android SDK platform 36
         run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
         env:
