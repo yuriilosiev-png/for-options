@@ -6546,8 +6546,7 @@ async function loadHistory() {
 
   try {
     if (S.exchange !== 'bybit') {
-      showHistoryError(tr('hist_deribit_wip'));
-      showHistoryLoading(false);
+      await loadHistoryDeribit(setProgress);
       return;
     }
 
@@ -6579,7 +6578,22 @@ async function loadHistory() {
     const CATS = ['option', 'linear', 'inverse'];
 
     // Загрузка одной категории в пределах чанка (с пагинацией cursor)
+    // v44: по опционам Bybit параметр baseCoin по умолчанию равен BTC.
+    // Без него сделки по ETH, SOL и остальным монетам в ответ не попадают —
+    // история молча теряла бОльшую часть опционных сделок. Перебираем монеты.
     async function fetchCatChunk(cat, startTime, endTime) {
+      if (cat === 'option') {
+        const all = [];
+        for (let i = 0; i < OPT_BASE_COINS.length; i++) {
+          const r = await fetchCatPage(cat, startTime, endTime, OPT_BASE_COINS[i]);
+          for (let k = 0; k < r.items.length; k++) all.push(r.items[k]);
+        }
+        return { cat: cat, items: all };
+      }
+      return fetchCatPage(cat, startTime, endTime, null);
+    }
+
+    async function fetchCatPage(cat, startTime, endTime, baseCoin) {
       const items = [];
       let cursor = '';
       let page = 0;
@@ -6590,6 +6604,7 @@ async function loadHistory() {
           startTime: String(startTime),
           endTime:   String(endTime),
         };
+        if (baseCoin) params.baseCoin = baseCoin;
         if (cursor) params.cursor = cursor;
 
         const data = await bybitGetWithProxy('/v5/position/closed-pnl', params);
@@ -8955,7 +8970,11 @@ function startOnHistory() {
 // только период после последней загрузки. Кнопка «обновить» тянет заново.
 // ═══════════════════════════════════════════════════
 
-const HIST_CACHE_KEY = 'oa-hist-cache-v1';
+// Монеты, по которым на Bybit есть опционы. Если биржа добавит новые,
+// дописать сюда: без перечисления их сделки в историю не попадут.
+const OPT_BASE_COINS = ['BTC', 'ETH', 'SOL'];
+
+const HIST_CACHE_KEY = 'oa-hist-cache-v2';   // v44: схема выборки изменилась
 const HIST_CACHE_MAX = 3000;     // верхний предел строк, чтобы не переполнить хранилище
 
 function histCacheRead() {
@@ -9136,6 +9155,148 @@ function openConnolly() {
 function closeConnolly() {
   const m = document.getElementById('connolly-modal');
   if (m) m.classList.remove('open');
+}
+
+
+// ═══════════════════════════════════════════════════
+// v44: ИСТОРИЯ СДЕЛОК DERIBIT
+//
+// private/get_user_trades_by_currency_and_time: окно по времени,
+// до 1000 записей за вызов, пагинация сдвигом end_timestamp.
+// Валюты расчёта на Deribit: BTC, ETH, USDC, USDT — опционы на SOL и
+// прочие альты расчётные в USDC, поэтому отдельной монетой не ходим.
+//
+// profit_loss приходит в валюте расчёта инструмента. Для BTC и ETH это
+// монета, поэтому переводим в доллары по index_price из той же записи.
+// Для USDC и USDT значение уже долларовое.
+// ═══════════════════════════════════════════════════
+
+const DERIBIT_CURRENCIES = ['BTC', 'ETH', 'USDC', 'USDT'];
+
+async function deribitAuthToken() {
+  const base = S.testnet ? 'https://test.deribit.com' : 'https://www.deribit.com';
+  const r = await fetch(base + '/api/v2/public/auth?client_id=' + encodeURIComponent(S.apiKey) +
+    '&client_secret=' + encodeURIComponent(S.apiSecret) + '&grant_type=client_credentials');
+  if (!r.ok) throw new Error('auth ' + r.status);
+  const j = await r.json();
+  const tok = j && j.result && j.result.access_token;
+  if (!tok) throw new Error(j && j.error ? (j.error.message || 'auth') : 'auth');
+  return { token: tok, base: base };
+}
+
+function deribitParseTrade(t) {
+  const name = String(t.instrument_name || '');
+  const parts = name.split('-');
+  const asset = parts[0] || '';
+  // Опцион опознаём по хвосту -C или -P; всё прочее считаем фьючерсом
+  const tail = parts.length ? parts[parts.length - 1].toUpperCase() : '';
+  const isOpt = (tail === 'C' || tail === 'P' ||
+                 tail.indexOf('C') === 0 || tail.indexOf('P') === 0) && parts.length >= 4;
+  const pl = parseFloat(t.profit_loss);
+  if (!Number.isFinite(pl)) return null;          // открывающие сделки P&L не несут
+  const idx = parseFloat(t.index_price);
+  const feeCur = String(t.fee_currency || '').toUpperCase();
+  const inCoin = (feeCur === 'BTC' || feeCur === 'ETH');
+  const pnl = inCoin && Number.isFinite(idx) ? pl * idx : pl;
+  const price = parseFloat(t.price);
+  const qty = parseFloat(t.amount);
+  const entryValue = (Number.isFinite(price) && Number.isFinite(qty))
+    ? Math.abs(price * qty * (inCoin && Number.isFinite(idx) ? idx : 1)) : 0;
+  return {
+    key: 'D' + (t.trade_id || (name + t.timestamp)),
+    trade: {
+      ts: parseInt(t.timestamp || '0', 10),
+      sym: name,
+      asset: asset,
+      instrType: isOpt ? 'opt' : 'fut',
+      optType: isOpt ? (tail.indexOf('P') === 0 ? 'put' : 'call') : 'fut',
+      strike: isOpt && parts.length >= 3 ? parts[2] : '\u2014',
+      side: (String(t.direction || '').toLowerCase() === 'sell') ? 'Sell' : 'Buy',
+      qty: Number.isFinite(qty) ? qty : 0,
+      avgEntryPrice: Number.isFinite(price) ? price : 0,
+      avgExitPrice: 0,
+      pnl: Math.round(pnl * 100) / 100,
+      pnlPct: entryValue > 0 ? (pnl / entryValue * 100) : 0
+    }
+  };
+}
+
+async function loadHistoryDeribit(setProgress) {
+  const now = Date.now();
+  const from = now - 180 * 86400000;
+  const allTrades = [];
+  const seenKeys = new Set();
+  let lastError = '';
+
+  // Кэш — тот же механизм, что у Bybit, ключ проверяет биржу
+  let cacheFrom = 0;
+  if (!H.forceFull) {
+    const cached = histCacheRead();
+    if (cached && cached.trades.length) {
+      for (let i = 0; i < cached.trades.length; i++) allTrades.push(cached.trades[i]);
+      if (Array.isArray(cached.keys)) for (let i = 0; i < cached.keys.length; i++) seenKeys.add(cached.keys[i]);
+      cacheFrom = cached.ts;
+      H.trades = allTrades.slice();
+      applyHistoryPeriod();
+    }
+  }
+  H.forceFull = false;
+  const startTs = cacheFrom > 0 ? Math.max(from, cacheFrom - 86400000) : from;
+
+  try {
+    const auth = await deribitAuthToken();
+    let done = 0;
+    for (let c = 0; c < DERIBIT_CURRENCIES.length; c++) {
+      const cur = DERIBIT_CURRENCIES[c];
+      let endTs = now;
+      let guard = 0;
+      while (guard < 20) {          // 20 × 1000 записей на валюту — потолок
+        guard++;
+        const url = auth.base + '/api/v2/private/get_user_trades_by_currency_and_time' +
+          '?currency=' + cur + '&start_timestamp=' + startTs + '&end_timestamp=' + endTs +
+          '&count=1000&sorting=desc&historical=true';
+        let j;
+        try {
+          const r = await fetch(url, { headers: { Authorization: 'Bearer ' + auth.token } });
+          if (!r.ok) throw new Error(cur + ': HTTP ' + r.status);
+          j = await r.json();
+        } catch(e) { lastError = e.message; break; }
+        if (j && j.error) { lastError = cur + ': ' + (j.error.message || 'error'); break; }
+        const list = (j && j.result && j.result.trades) || [];
+        if (!list.length) break;
+        let oldest = endTs;
+        for (let i = 0; i < list.length; i++) {
+          const p = deribitParseTrade(list[i]);
+          const ts = parseInt(list[i].timestamp || '0', 10);
+          if (ts && ts < oldest) oldest = ts;
+          if (!p) continue;
+          if (!seenKeys.has(p.key)) { seenKeys.add(p.key); allTrades.push(p.trade); }
+        }
+        allTrades.sort(function(a, b){ return b.ts - a.ts; });
+        H.trades = allTrades.slice();
+        applyHistoryPeriod();
+        done++;
+        setProgress(tr('hist_progress', { a: done, b: done + 1 }));
+        if (list.length < 1000 || oldest <= startTs) break;
+        endTs = oldest - 1;
+      }
+    }
+
+    H.trades = allTrades;
+    H.loaded = true;
+    allTrades.sort(function(a, b){ return b.ts - a.ts; });
+    if (!lastError) histCacheWrite(allTrades, Array.from(seenKeys));
+    else console.warn('[loadHistoryDeribit] были ошибки, кэш не записан:', lastError);
+    showHistoryLoading(false);
+    applyHistoryPeriod();
+    if (!allTrades.length && lastError) showHistoryError(lastError);
+  } catch(e) {
+    showHistoryLoading(false);
+    showHistoryError(e.message || tr('hist_err'));
+  } finally {
+    const rb = document.getElementById('history-refresh-btn');
+    if (rb) { rb.disabled = false; rb.textContent = '\u27f3'; }
+  }
 }
 
 // PRICE ALERTS
@@ -10339,6 +10500,8 @@ const I18N = {
   en: {
     t_balance:"Balance / Available", t_dhedge:"Delta hedging", t_alerts:"Price alerts",
     t_theme:"Switch theme", t_rotate:"Rotate screen", t_about:"About & legal info",
+    // v44: history error
+    hist_err:"Could not load trade history.",
     // v42: connolly screen
     cn_title:"\u0394 Connolly",
     // v41: tabs
@@ -10731,6 +10894,8 @@ const I18N = {
   ru: {
     t_balance:"\u0411\u0430\u043b\u0430\u043d\u0441 / \u0414\u043e\u0441\u0442\u0443\u043f\u043d\u043e", t_dhedge:"\u0414\u0435\u043b\u044c\u0442\u0430-\u0445\u0435\u0434\u0436\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u0435", t_alerts:"\u0410\u043b\u0435\u0440\u0442\u044b \u043f\u043e \u0446\u0435\u043d\u0435",
     t_theme:"\u0421\u043c\u0435\u043d\u0438\u0442\u044c \u0442\u0435\u043c\u0443", t_rotate:"\u041f\u043e\u0432\u0435\u0440\u043d\u0443\u0442\u044c \u044d\u043a\u0440\u0430\u043d", t_about:"\u041e \u043f\u0440\u0438\u043b\u043e\u0436\u0435\u043d\u0438\u0438 \u0438 \u044e\u0440\u0438\u0434\u0438\u0447\u0435\u0441\u043a\u0430\u044f \u0438\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0438\u044f",
+    // v44: oshibka istorii
+    hist_err:"\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044c \u0438\u0441\u0442\u043e\u0440\u0438\u044e \u0441\u0434\u0435\u043b\u043e\u043a.",
     // v42: razdel Konnolli
     cn_title:"\u0394 \u041a\u043e\u043d\u043d\u043e\u043b\u043b\u0438",
     // v41: vkladki
