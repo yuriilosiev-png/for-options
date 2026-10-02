@@ -1450,6 +1450,66 @@ input[type="range"] { touch-action: none; }
   #hist-calc-btn { padding: 4px 9px; font-size: 10px; margin-left: 6px; }
 }
 
+/* ─── v41: НИЖНЯЯ НАВИГАЦИЯ ───────────────────────────────────
+   Панель лежит выше полноэкранных разделов (200/210), но ниже
+   диалогов и панели алертов. Диалоги — это .modal-overlay; когда
+   любой из них открыт, панель прячется классом на body. */
+:root { --tabbar-h: 58px; }
+
+#tabbar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 250;
+  height: calc(var(--tabbar-h) + max(env(safe-area-inset-bottom, 0px), var(--nav-gap, 0px)));
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), var(--nav-gap, 0px));
+  display: flex; align-items: stretch;
+  background: var(--bg2); border-top: 1px solid var(--border);
+}
+body.dialog-open #tabbar { display: none; }
+
+.tab-item {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 2px;
+  cursor: pointer; user-select: none; position: relative;
+  color: var(--text3); transition: color .15s;
+}
+.tab-item.active { color: var(--blue); }
+.tab-item .ti-ic { font-size: 17px; line-height: 1; }
+.tab-item .ti-tx { font-size: 9px; white-space: nowrap; }
+.tab-item.active .ti-tx { font-weight: 700; }
+.tab-item.active::after {
+  content: ''; position: absolute; bottom: 0; left: 26%; right: 26%;
+  height: 3px; border-radius: 2px 2px 0 0; background: var(--blue);
+}
+
+/* Разделы поджимаются, чтобы панель ничего не перекрывала */
+#history-modal, #positions-modal, #vol-modal, #strangle-calc-modal {
+  padding-bottom: calc(var(--tabbar-h) + max(env(safe-area-inset-bottom, 0px), var(--nav-gap, 0px)));
+}
+#app { padding-bottom: calc(var(--tabbar-h) + max(env(safe-area-inset-bottom, 0px), var(--nav-gap, 0px))); }
+
+/* В горизонтали высота дороже — панель ниже и без подписей */
+@media (orientation: landscape) {
+  :root { --tabbar-h: 44px; }
+  .tab-item .ti-tx { display: none; }
+  .tab-item .ti-ic { font-size: 19px; }
+}
+
+/* ─── v42: раздел «Коннолли» отдельным экраном ─── */
+#cn-topbar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; background: var(--bg2);
+  border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+#cn-topbar .sc-title { flex: 1; }
+#connolly-modal {
+  position: fixed; inset: 0; z-index: 210;
+  background: var(--bg); display: none; flex-direction: column;
+  padding-bottom: calc(var(--tabbar-h) + max(env(safe-area-inset-bottom, 0px), var(--nav-gap, 0px)));
+}
+#connolly-modal.open { display: flex; }
+/* страницы «Расчётов» больше нет — убираем следы переключателя */
+#sc-content.off { display: block; }
+#sc-footer.off { display: flex; }
+
 </style>
 </head>
 <body>
@@ -1569,7 +1629,17 @@ input[type="range"] { touch-action: none; }
       <div class="modal-title" data-i18n="about_title">ℹ️ О приложении</div>
 
       <div style="font-size:12px;line-height:1.55;color:var(--text2)">
-        <p style="margin:0 0 10px" data-i18n-html="about_p1"><strong style="color:var(--text)">Журнал PnL</strong> — журнал сделок и аналитический калькулятор по опционам и фьючерсам. Закрытые сделки читаются по ключу только на чтение; цены берутся из публичных API бирж.</p>
+        <div style="margin:0 0 14px;padding:10px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px">
+      <label style="display:block;font-size:11px;color:var(--text3);margin-bottom:6px" data-i18n="t_start_tab">Стартовый раздел</label>
+      <select id="start-tab-select" class="sc-select" onchange="setStartTab(this.value)" style="width:100%">
+        <option value="0" data-i18n="tab_journal">Журнал</option>
+        <option value="1" data-i18n="tab_positions">Позиции</option>
+        <option value="2" data-i18n="tab_options">Опционы</option>
+        <option value="3" data-i18n="tab_iv">IV rank</option>
+        <option value="4" data-i18n="tab_connolly">Коннолли</option>
+      </select>
+    </div>
+    <p style="margin:0 0 10px" data-i18n-html="about_p1"><strong style="color:var(--text)">Журнал PnL</strong> — журнал сделок и аналитический калькулятор по опционам и фьючерсам. Закрытые сделки читаются по ключу только на чтение; цены берутся из публичных API бирж.</p>
 
         <div style="background:var(--bg4);border:1px solid var(--border2);border-left:3px solid var(--orange,#e8a33d);border-radius:7px;padding:10px 12px;margin:0 0 12px">
           <p style="margin:0 0 6px;color:var(--text)" data-i18n-html="about_nfa_h"><strong>⚠️ Не является финансовым советом.</strong></p>
@@ -1764,9 +1834,7 @@ input[type="range"] { touch-action: none; }
       <button class="leg-action-btn import-btn" onclick="importPositions()" data-i18n="btn_import">⬇ Импорт</button>
       <button class="leg-action-btn" onclick="openPositionsModal()" style="border-color:var(--green);color:var(--green)" title="Текущие позиции на Bybit" data-i18n-title="t_pos_bybit" data-i18n="btn_positions">📋 Позиции</button>
       <button class="leg-action-btn" onclick="openStrangleCalc()" style="border-color:var(--accent);color:var(--accent)" title="Калькулятор связки Short Strangle" data-i18n-title="t_calc" data-i18n="btn_calc">🧮 Рассчитать</button>
-      <!-- v35.1: статистика волатильности -->
-      <button class="leg-action-btn" id="ivrank-btn" onclick="openVolModal()" style="border-color:var(--blue);color:var(--blue)" data-i18n-title="t_vol" data-i18n="btn_ivrank">IV rank</button>
-      <button class="leg-action-btn" onclick="openHistoryModal()" style="border-color:var(--purple);color:var(--purple);margin-left:auto" data-i18n="btn_history">📊 История</button>
+
       <div id="delta-pill" style="display:none"></div>
     </div>
     <div style="overflow-x:auto">
@@ -2011,6 +2079,15 @@ input[type="range"] { touch-action: none; }
   </div>
 </div>
 
+<!-- ═══ v41: НИЖНЯЯ НАВИГАЦИЯ ═══ -->
+<div id="tabbar">
+  <div class="tab-item" data-tab="0" onclick="goTab(0)"><span class="ti-ic">📊</span><span class="ti-tx" data-i18n="tab_journal">Журнал</span></div>
+  <div class="tab-item" data-tab="1" onclick="goTab(1)"><span class="ti-ic">📋</span><span class="ti-tx" data-i18n="tab_positions">Позиции</span></div>
+  <div class="tab-item active" data-tab="2" onclick="goTab(2)"><span class="ti-ic">↗</span><span class="ti-tx" data-i18n="tab_options">Опционы</span></div>
+  <div class="tab-item" data-tab="3" onclick="goTab(3)"><span class="ti-ic">〜</span><span class="ti-tx" data-i18n="tab_iv">IV rank</span></div>
+  <div class="tab-item" data-tab="4" onclick="goTab(4)"><span class="ti-ic">Δ</span><span class="ti-tx" data-i18n="tab_connolly">Коннолли</span></div>
+</div>
+
 <div id="history-modal">
   <div id="history-topbar">
     <div class="h-title" data-i18n="hist_title">📊 История P&amp;L</div>
@@ -2024,8 +2101,8 @@ input[type="range"] { touch-action: none; }
   </div>
 
   <div id="history-period-bar">
-    <button class="period-btn active" onclick="setHistoryPeriod(7,this)" data-i18n="hist_7d">7д</button>
-    <button class="period-btn" onclick="setHistoryPeriod(30,this)" data-i18n="hist_30d">30д</button>
+    <button class="period-btn" onclick="setHistoryPeriod(7,this)" data-i18n="hist_7d">7д</button>
+    <button class="period-btn active" onclick="setHistoryPeriod(30,this)" data-i18n="hist_30d">30д</button>
     <button class="period-btn" onclick="setHistoryPeriod(90,this)" data-i18n="hist_90d">90д</button>
     <button class="period-btn" onclick="setHistoryPeriod(180,this)" data-i18n="hist_180d">180д</button>
     <button class="period-btn" onclick="setHistoryPeriod(0,this)" data-i18n="hist_all">Всё</button>
@@ -2033,8 +2110,6 @@ input[type="range"] { touch-action: none; }
     <button class="instr-btn active" onclick="setInstrFilter('all',this)" data-i18n="hist_f_all">Все</button>
     <button class="instr-btn" onclick="setInstrFilter('opt',this)" data-i18n="hist_f_opt">Опционы</button>
     <button class="instr-btn" onclick="setInstrFilter('fut',this)" data-i18n="hist_f_fut">Фьючи</button>
-    <!-- v39: переход на калькулятор; история теперь стартовый экран -->
-    <button id="hist-calc-btn" onclick="closeHistoryModal()" data-i18n="hist_to_calc">Опционный калькулятор</button>
   </div>
 
   <div id="history-chart-wrap">
@@ -2145,18 +2220,7 @@ input[type="range"] { touch-action: none; }
     <button class="sc-help-btn" id="sc-help-btn" onclick="scToggleHelp()" title="Как это работает" data-i18n-title="sc_help_t">?</button>
     <button class="p-close-btn" onclick="closeStrangleCalc()" title="Закрыть">✕</button>
   </div>
-  <!-- v36: переключатель страниц (свайп влево-вправо тоже работает) -->
-  <div id="sc-tabs">
-    <div class="sc-tab active" data-page="0" onclick="scSetPage(0)" data-i18n="dn_tab_long">Покупка волатильности</div>
-    <div class="sc-tab" data-page="1" onclick="scSetPage(1)" data-i18n="dn_tab_short">Продажа волатильности</div>
-  </div>
-
-  <!-- ═══ v36: ПОКУПКА ВОЛАТИЛЬНОСТИ (дельта-нейтральный гамма-скальпинг) ═══ -->
-  <div id="dn-page" class="on">
-    <div id="dn-body"></div>
-  </div>
-
-  <div id="sc-content" class="off">
+  <div id="sc-content">
     <div id="sc-status" class="sc-status"></div>
 
     <div class="sc-card" id="sc-help">
@@ -2258,13 +2322,23 @@ input[type="range"] { touch-action: none; }
 
     <div class="sc-disclaimer" data-i18n="sc_disclaimer">Расчёт информационный, по модели Black-Scholes. Ордера ставятся вручную на бирже. Не является финансовым советом.</div>
   </div>
-  <div id="sc-footer" class="off">
+  <div id="sc-footer">
     <button class="sc-btn" onclick="closeStrangleCalc()" data-i18n="btn_close">Закрыть</button>
     <button class="sc-btn primary" onclick="scApply()" data-i18n="sc_apply">Применить на график</button>
   </div>
-  <!-- v36: футер страницы покупки волатильности -->
+</div>
+
+<!-- ═══ v42: РАЗДЕЛ «КОННОЛЛИ» — дельта-нейтральный гамма-скальпинг ═══ -->
+<div id="connolly-modal">
+  <div id="cn-topbar">
+    <div class="sc-title" data-i18n="cn_title">Δ Коннолли</div>
+    <button class="p-close-btn" onclick="closeConnolly()" title="Закрыть">✕</button>
+  </div>
+  <div id="dn-page" class="on">
+    <div id="dn-body"></div>
+  </div>
   <div id="dn-footer" class="on">
-    <button class="sc-btn" onclick="closeStrangleCalc()" data-i18n="btn_close">Закрыть</button>
+    <button class="sc-btn" onclick="closeConnolly()" data-i18n="btn_close">Закрыть</button>
     <button class="sc-btn primary" id="dn-anchor-btn" onclick="dnSetAnchorNow()" data-i18n="dn_anchor_now">Якорь по текущей цене</button>
   </div>
 </div>
@@ -4108,9 +4182,6 @@ async function openStrangleCalc() {
   const m = scEl('strangle-calc-modal');
   if (!m) return;
   m.classList.add('open');
-  // v36: экран открывается на странице покупки волатильности
-  scSetPage(0);
-  loadVolStats(false).then(dnRender).catch(function(){ dnRender(); });
   scEl('sc-status').textContent = tr('sc_loading');
   SC.ready = false;
   SC.expPart = null; SC.expIso = null; SC.strikes = [];
@@ -5952,7 +6023,16 @@ async function importPositions() {
 // ═══════════════════════════════════════════════════
 // MODALS
 // ═══════════════════════════════════════════════════
-function openModal(id) { document.getElementById(id).classList.add('open'); }
+function openModal(id) {
+  // v41: в окне «О приложении» подставляем сохранённый стартовый раздел
+  if (id === 'about-modal') {
+    try {
+      const sel = document.getElementById('start-tab-select');
+      if (sel) sel.value = String(getStartTab());
+    } catch(e) {}
+  }
+  document.getElementById(id).classList.add('open');
+}
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
 document.querySelectorAll('.modal-overlay').forEach(m => {
@@ -6076,7 +6156,7 @@ const H = {
   forceFull: false,    // v39: игнорировать кэш и перезагрузить все 180 дней
   trades: [],          // все загруженные закрытые сделки
   filteredTrades: [],  // после фильтра по периоду
-  periodDays: 7,       // текущий период (0 = всё)
+  periodDays: 30,      // v43: по умолчанию месяц — за неделю у многих пусто
   instrFilter: 'all',  // 'all' | 'opt' | 'fut'
   loaded: false,
 };
@@ -8683,6 +8763,9 @@ function dnSetAnchorNow() {
 
 // ── Переключение страниц ──
 function scSetPage(i) {
+  // v42: переключатель страниц удалён вместе с разделением экранов.
+  // Функция оставлена, чтобы не ломать старые вызовы, но ничего не делает.
+  if (!document.getElementById('sc-tabs')) return;
   _scPage = (i === 1) ? 1 : 0;
   const dn = document.getElementById('dn-page');
   const sc = document.getElementById('sc-content');
@@ -8726,7 +8809,8 @@ function scSetPage(i) {
     x0 = null;
     if (Date.now() - t0 > 700) return;
     if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.6) return;
-    scSetPage(dx < 0 ? 1 : 0);
+    // v42: страниц в «Расчётах» больше нет, свайп отдан общей навигации
+    return;
   }, { passive: true });
 })();
 
@@ -8853,7 +8937,8 @@ function renderHistoryStats2() {
 // два окна подряд только раздражали бы.
 function startOnHistory() {
   try {
-    openHistoryModal();
+    // v41: открываем раздел, выбранный пользователем; по умолчанию журнал
+    goTab(getStartTab());
   } catch(e) {
     console.warn('[start]', e.message);
     maybeShowApiBanner();
@@ -8892,6 +8977,165 @@ function histCacheWrite(trades, keys) {
       trades: cut, keys: keys.slice(0, HIST_CACHE_MAX * 2)
     }));
   } catch(e) { console.warn('[hist cache]', e.message); }
+}
+
+
+// ═══════════════════════════════════════════════════
+// v41: НАВИГАЦИЯ ПО РАЗДЕЛАМ
+//
+// Пять вкладок вместо стопки модалок. Сами экраны не переносим —
+// вкладка просто открывает нужный полноэкранный раздел, а «Опционы»
+// закрывают все и показывают главный экран под ними.
+// Так переключение работает сразу, а перенос содержимого можно делать
+// по одному разделу, не ломая остальное.
+// ═══════════════════════════════════════════════════
+
+const TAB_KEY = 'oa-start-tab';
+const TAB_SCREENS = ['history-modal', 'positions-modal', null, 'vol-modal', 'connolly-modal'];
+let _tab = 2;
+
+function _tabCloseAll() {
+  for (let i = 0; i < TAB_SCREENS.length; i++) {
+    const id = TAB_SCREENS[i];
+    if (!id) continue;
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('open');
+  }
+}
+
+function _tabMark(i) {
+  _tab = i;
+  const items = document.querySelectorAll('#tabbar .tab-item');
+  for (let k = 0; k < items.length; k++) {
+    items[k].classList.toggle('active', parseInt(items[k].getAttribute('data-tab'), 10) === i);
+  }
+}
+
+// Панель прячется, пока открыт любой диалог (.modal-overlay) или панель алертов
+function tabbarSync() {
+  try {
+    const dlg = document.querySelector('.modal-overlay.open');
+    const alerts = document.getElementById('alert-panel');
+    const alertOpen = alerts && alerts.classList.contains('open');
+    document.body.classList.toggle('dialog-open', !!(dlg || alertOpen));
+  } catch(e) {}
+}
+
+function goTab(i) {
+  i = Math.max(0, Math.min(TAB_SCREENS.length - 1, i | 0));
+  _tabCloseAll();
+  _tabMark(i);
+  try {
+    // Через window — так вызов гарантированно попадает в обёрнутую версию
+    if (i === 0) window.openHistoryModal();
+    else if (i === 1) window.openPositionsModal();
+    else if (i === 3) window.openVolModal();
+    else if (i === 4) window.openConnolly();
+  } catch(e) { console.warn('[tab]', e.message); }
+  tabbarSync();
+}
+
+function setStartTab(v) {
+  try { localStorage.setItem(TAB_KEY, String(parseInt(v, 10) || 0)); } catch(e) {}
+}
+function getStartTab() {
+  try {
+    const v = parseInt(localStorage.getItem(TAB_KEY), 10);
+    return (v >= 0 && v < TAB_SCREENS.length) ? v : 0;
+  } catch(e) { return 0; }
+}
+
+// Открытие и закрытие разделов из старых кнопок тоже должно двигать подсветку.
+// Оборачиваем существующие функции, не переписывая их.
+(function wrapScreenFns() {
+  const pairs = [
+    ['openHistoryModal', 0], ['openPositionsModal', 1],
+    ['openVolModal', 3], ['openConnolly', 4]
+  ];
+  for (let i = 0; i < pairs.length; i++) {
+    const name = pairs[i][0], idx = pairs[i][1];
+    const fn = window[name];
+    if (typeof fn !== 'function') continue;
+    window[name] = function() {
+      const r = fn.apply(this, arguments);
+      _tabMark(idx);
+      tabbarSync();
+      return r;
+    };
+  }
+  const closers = ['closeHistoryModal', 'closePositionsModal', 'closeVolModal', 'closeConnolly'];
+  for (let i = 0; i < closers.length; i++) {
+    const name = closers[i];
+    const fn = window[name];
+    if (typeof fn !== 'function') continue;
+    window[name] = function() {
+      const r = fn.apply(this, arguments);
+      // Закрыли раздел — оказались на главном экране, это «Опционы»
+      _tabMark(2);
+      tabbarSync();
+      return r;
+    };
+  }
+  const om = window.openModal, cm = window.closeModal;
+  if (typeof om === 'function') window.openModal = function(id) { om(id); tabbarSync(); };
+  if (typeof cm === 'function') window.closeModal = function(id) { cm(id); tabbarSync(); };
+  const ta = window.toggleAlertPanel;
+  if (typeof ta === 'function') window.toggleAlertPanel = function() {
+    const r = ta.apply(this, arguments);
+    setTimeout(tabbarSync, 0);
+    return r;
+  };
+})();
+
+// Свайп между вкладками. Игнорируем поля ввода, ползунки и график —
+// на графике горизонтальное движение уже занято.
+(function initTabSwipe() {
+  let x0 = null, y0 = null, t0 = 0;
+  function blocked(el) {
+    while (el && el !== document.body) {
+      const tag = (el.tagName || '').toLowerCase();
+      if (tag === 'input' || tag === 'select' || tag === 'textarea' ||
+          tag === 'button' || tag === 'canvas') return true;
+      if (el.id === 'tabbar') return true;
+      el = el.parentElement;
+    }
+    return false;
+  }
+  document.addEventListener('touchstart', function(e) {
+    if (document.body.classList.contains('dialog-open')) { x0 = null; return; }
+    if (blocked(e.target)) { x0 = null; return; }
+    x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; t0 = Date.now();
+  }, { passive: true });
+  document.addEventListener('touchend', function(e) {
+    if (x0 === null) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - x0, dy = t.clientY - y0;
+    x0 = null;
+    if (Date.now() - t0 > 700) return;
+    if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 1.6) return;
+    goTab(_tab + (dx < 0 ? 1 : -1));
+  }, { passive: true });
+})();
+
+
+// ═══════════════════════════════════════════════════
+// v42: РАЗДЕЛ «КОННОЛЛИ»
+// Раньше жил первой страницей внутри «Расчётов» рядом с TP/SL —
+// двумя разными задачами в одном окне. Теперь отдельный экран,
+// а «Расчёты» остались чистым калькулятором TP/SL.
+// ═══════════════════════════════════════════════════
+
+function openConnolly() {
+  const m = document.getElementById('connolly-modal');
+  if (!m) return;
+  m.classList.add('open');
+  dnRender();
+  dnLoadMarket(false).then(dnRender).catch(function(){});
+}
+
+function closeConnolly() {
+  const m = document.getElementById('connolly-modal');
+  if (m) m.classList.remove('open');
 }
 
 // PRICE ALERTS
@@ -10095,6 +10339,15 @@ const I18N = {
   en: {
     t_balance:"Balance / Available", t_dhedge:"Delta hedging", t_alerts:"Price alerts",
     t_theme:"Switch theme", t_rotate:"Rotate screen", t_about:"About & legal info",
+    // v42: connolly screen
+    cn_title:"\u0394 Connolly",
+    // v41: tabs
+    tab_journal:"Journal",
+    tab_positions:"Positions",
+    tab_options:"Options",
+    tab_iv:"IV rank",
+    tab_connolly:"Connolly",
+    t_start_tab:"Start section",
     // v39: history speed
     hist_to_calc:"Options calculator",
     hist_progress2:"Loading history\u2026 {a} of {b}, about {s} s left",
@@ -10478,6 +10731,15 @@ const I18N = {
   ru: {
     t_balance:"\u0411\u0430\u043b\u0430\u043d\u0441 / \u0414\u043e\u0441\u0442\u0443\u043f\u043d\u043e", t_dhedge:"\u0414\u0435\u043b\u044c\u0442\u0430-\u0445\u0435\u0434\u0436\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u0435", t_alerts:"\u0410\u043b\u0435\u0440\u0442\u044b \u043f\u043e \u0446\u0435\u043d\u0435",
     t_theme:"\u0421\u043c\u0435\u043d\u0438\u0442\u044c \u0442\u0435\u043c\u0443", t_rotate:"\u041f\u043e\u0432\u0435\u0440\u043d\u0443\u0442\u044c \u044d\u043a\u0440\u0430\u043d", t_about:"\u041e \u043f\u0440\u0438\u043b\u043e\u0436\u0435\u043d\u0438\u0438 \u0438 \u044e\u0440\u0438\u0434\u0438\u0447\u0435\u0441\u043a\u0430\u044f \u0438\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0438\u044f",
+    // v42: razdel Konnolli
+    cn_title:"\u0394 \u041a\u043e\u043d\u043d\u043e\u043b\u043b\u0438",
+    // v41: vkladki
+    tab_journal:"\u0416\u0443\u0440\u043d\u0430\u043b",
+    tab_positions:"\u041f\u043e\u0437\u0438\u0446\u0438\u0438",
+    tab_options:"\u041e\u043f\u0446\u0438\u043e\u043d\u044b",
+    tab_iv:"IV rank",
+    tab_connolly:"\u041a\u043e\u043d\u043d\u043e\u043b\u043b\u0438",
+    t_start_tab:"\u0421\u0442\u0430\u0440\u0442\u043e\u0432\u044b\u0439 \u0440\u0430\u0437\u0434\u0435\u043b",
     // v39: skorost istorii
     hist_to_calc:"\u041e\u043f\u0446\u0438\u043e\u043d\u043d\u044b\u0439 \u043a\u0430\u043b\u044c\u043a\u0443\u043b\u044f\u0442\u043e\u0440",
     hist_progress2:"\u0417\u0430\u0433\u0440\u0443\u0437\u043a\u0430 \u0438\u0441\u0442\u043e\u0440\u0438\u0438\u2026 {a} \u0438\u0437 {b}, \u043e\u0441\u0442\u0430\u043b\u043e\u0441\u044c \u043e\u043a\u043e\u043b\u043e {s} \u0441",
