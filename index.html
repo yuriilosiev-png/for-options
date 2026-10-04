@@ -1514,6 +1514,10 @@ body.dialog-open #tabbar { display: none; }
 #sc-content.off { display: block; }
 #sc-footer.off { display: flex; }
 
+/* ═══ D2 icons: выравнивание SVG внутри .ti-ic ═══ */
+.tab-item .ti-ic { display: inline-flex; align-items: center; justify-content: center; }
+.tab-item .ti-ic svg { display: block; }
+
 </style>
 </head>
 <body>
@@ -2082,13 +2086,28 @@ body.dialog-open #tabbar { display: none; }
   </div>
 </div>
 
-<!-- ═══ v41: НИЖНЯЯ НАВИГАЦИЯ ═══ -->
+<!-- ═══ v41: НИЖНЯЯ НАВИГАЦИЯ (D2 иконки) ═══ -->
 <div id="tabbar">
-  <div class="tab-item" data-tab="0" onclick="goTab(0)"><span class="ti-ic">📊</span><span class="ti-tx" data-i18n="tab_journal">Журнал</span></div>
-  <div class="tab-item" data-tab="1" onclick="goTab(1)"><span class="ti-ic">📋</span><span class="ti-tx" data-i18n="tab_positions">Позиции</span></div>
-  <div class="tab-item active" data-tab="2" onclick="goTab(2)"><span class="ti-ic">↗</span><span class="ti-tx" data-i18n="tab_options">Опционы</span></div>
-  <div class="tab-item" data-tab="3" onclick="goTab(3)"><span class="ti-ic">〜</span><span class="ti-tx" data-i18n="tab_iv">IV rank</span></div>
-  <div class="tab-item" data-tab="4" onclick="goTab(4)"><span class="ti-ic">Δ</span><span class="ti-tx" data-i18n="tab_connolly">Коннолли</span></div>
+  <div class="tab-item" data-tab="0" onclick="goTab(0)">
+    <span class="ti-ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="tbJrn" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6dd0ff"/><stop offset="1" stop-color="#1a4d99"/></linearGradient><radialGradient id="tbJrnGlow" cx="0.5" cy="1" r="0.6"><stop offset="0" stop-color="#3d7fff" stop-opacity="0.55"/><stop offset="1" stop-color="#3d7fff" stop-opacity="0"/></radialGradient></defs><ellipse cx="12" cy="21" rx="9" ry="2" fill="url(#tbJrnGlow)"/><rect x="3.5" y="15" width="4" height="5.5" rx="1" fill="url(#tbJrn)" stroke="#5bc0ff" stroke-width="0.4" stroke-opacity="0.6"/><rect x="10" y="10.5" width="4" height="10" rx="1" fill="url(#tbJrn)" stroke="#5bc0ff" stroke-width="0.4" stroke-opacity="0.6"/><rect x="16.5" y="6" width="4" height="14.5" rx="1" fill="url(#tbJrn)" stroke="#5bc0ff" stroke-width="0.4" stroke-opacity="0.6"/></svg></span>
+    <span class="ti-tx" data-i18n="tab_journal">Журнал</span>
+  </div>
+  <div class="tab-item" data-tab="1" onclick="goTab(1)">
+    <span class="ti-ic">📋</span>
+    <span class="ti-tx" data-i18n="tab_positions">Позиции</span>
+  </div>
+  <div class="tab-item active" data-tab="2" onclick="goTab(2)">
+    <span class="ti-ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="tbOpt" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#7a2edc"/><stop offset="1" stop-color="#e26dff"/></linearGradient></defs><polyline points="3,18 9,13 13,16 21,6" fill="none" stroke="url(#tbOpt)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><polyline points="15,6 21,6 21,12" fill="none" stroke="url(#tbOpt)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    <span class="ti-tx" data-i18n="tab_options">Опционы</span>
+  </div>
+  <div class="tab-item" data-tab="3" onclick="goTab(3)">
+    <span class="ti-ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="tbIv" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ffb84d"/><stop offset="1" stop-color="#ff8a1e"/></linearGradient></defs><path d="M3 12 C 6 5, 9 5, 12 12 S 18 19, 21 12" fill="none" stroke="url(#tbIv)" stroke-width="2.4" stroke-linecap="round"/></svg></span>
+    <span class="ti-tx" data-i18n="tab_iv">IV rank</span>
+  </div>
+  <div class="tab-item" data-tab="4" onclick="goTab(4)">
+    <span class="ti-ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="tbPyL" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8ee6ff"/><stop offset="1" stop-color="#2a7fcf"/></linearGradient><linearGradient id="tbPyR" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a7fcf"/><stop offset="1" stop-color="#0a3a7a"/></linearGradient></defs><polygon points="12,3.5 3,19 12,19" fill="url(#tbPyL)"/><polygon points="12,3.5 21,19 12,19" fill="url(#tbPyR)"/></svg></span>
+    <span class="ti-tx" data-i18n="tab_connolly">Коннолли</span>
+  </div>
 </div>
 
 <div id="history-modal">
