@@ -144,7 +144,9 @@ body {
 /* ─── LEGS TABLE ─── */
 #legs-section {
   background: var(--bg2); border-bottom: 1px solid var(--border);
-  flex-shrink: 0; max-height: 160px; overflow-y: auto;
+  /* v46: кнопки «Позиции» и «История» уехали в нижнюю панель — высвободившуюся
+     строку отдаём списку ног, иначе при двух-трёх позициях он был слишком узким */
+  flex-shrink: 0; max-height: 230px; overflow-y: auto;
 }
 #legs-header {
   display: flex; align-items: center; gap: 8px;
@@ -666,7 +668,7 @@ input[type="range"] { touch-action: none; }
   /* v18: график был визуально «обрезан» снизу — мало вертикали. Освобождаем место:
      таблицу позиций ужимаем (лишние строки скроллятся), метрики компактнее,
      графику даём гарантированную минимальную высоту, ось X отделяем от IV-бара. */
-  #legs-section { max-height: 108px; }
+  #legs-section { max-height: 164px; }   /* v46: +1 строка за счёт убранных кнопок */
   #legs-header { padding: 4px 10px; }
   #legs-table th, #legs-table td { padding: 3px 6px; font-size: 10px; }
   /* Канвас графика не схлопывается ниже разумной высоты */
@@ -1454,7 +1456,7 @@ input[type="range"] { touch-action: none; }
    Панель лежит выше полноэкранных разделов (200/210), но ниже
    диалогов и панели алертов. Диалоги — это .modal-overlay; когда
    любой из них открыт, панель прячется классом на body. */
-:root { --tabbar-h: 58px; }
+:root { --tabbar-h: 66px; }
 
 #tabbar {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 250;
@@ -1471,9 +1473,11 @@ body.dialog-open #tabbar { display: none; }
   cursor: pointer; user-select: none; position: relative;
   color: var(--text3); transition: color .15s;
 }
+.tab-item { color: var(--text2); }          /* v46: ярче, было --text3 */
 .tab-item.active { color: var(--blue); }
-.tab-item .ti-ic { font-size: 17px; line-height: 1; }
-.tab-item .ti-tx { font-size: 9px; white-space: nowrap; }
+.tab-item .ti-ic { font-size: 23px; line-height: 1; filter: saturate(1.25); }
+.tab-item .ti-tx { font-size: 10px; white-space: nowrap; }
+.tab-item.active .ti-ic { transform: scale(1.08); }
 .tab-item.active .ti-tx { font-weight: 700; }
 .tab-item.active::after {
   content: ''; position: absolute; bottom: 0; left: 26%; right: 26%;
@@ -1488,9 +1492,9 @@ body.dialog-open #tabbar { display: none; }
 
 /* В горизонтали высота дороже — панель ниже и без подписей */
 @media (orientation: landscape) {
-  :root { --tabbar-h: 44px; }
+  :root { --tabbar-h: 48px; }
   .tab-item .ti-tx { display: none; }
-  .tab-item .ti-ic { font-size: 19px; }
+  .tab-item .ti-ic { font-size: 22px; }
 }
 
 /* ─── v42: раздел «Коннолли» отдельным экраном ─── */
@@ -1832,7 +1836,6 @@ body.dialog-open #tabbar { display: none; }
       <span>(<span id="legs-count">0</span>) <span data-i18n="legs_positions">Позиции</span></span>
       <button class="leg-action-btn primary" onclick="openAddLegModal()" style="margin-left:8px" data-i18n="btn_add">+ Добавить</button>
       <button class="leg-action-btn import-btn" onclick="importPositions()" data-i18n="btn_import">⬇ Импорт</button>
-      <button class="leg-action-btn" onclick="openPositionsModal()" style="border-color:var(--green);color:var(--green)" title="Текущие позиции на Bybit" data-i18n-title="t_pos_bybit" data-i18n="btn_positions">📋 Позиции</button>
       <button class="leg-action-btn" onclick="openStrangleCalc()" style="border-color:var(--accent);color:var(--accent)" title="Калькулятор связки Short Strangle" data-i18n-title="t_calc" data-i18n="btn_calc">🧮 Рассчитать</button>
 
       <div id="delta-pill" style="display:none"></div>
@@ -8224,7 +8227,7 @@ function maybeShowApiBanner() {
 // ═══════════════════════════════════════════════════
 
 const DN_KEY = 'oa-dn-v2';
-const DN_DEF = { stepPct: 3, feePct: 0.055, deltaMode: 'chain', build: 'call', anchors: {}, sessions: {} };
+const DN_DEF = { stepPct: 3, feePct: 0.055, lotStep: 0.05, deltaMode: 'chain', build: 'call', anchors: {}, sessions: {} };
 let DN = null;
 let _scPage = 0;
 let _dnMarket = null;      // фандинг и IV колла/пута, кэш на 5 минут
@@ -8487,6 +8490,19 @@ async function dnLoadMarket(force) {
 }
 
 function dnFmt(v, d) { return Number.isFinite(v) ? v.toFixed(d === undefined ? 2 : d) : '\u2014'; }
+// v45: знак ставим по значению, иначе у отрицательного выходило «+-7.79»
+function dnPct(v) {
+  if (!Number.isFinite(v)) return '\u2014';
+  return (v >= 0 ? '+' : '') + v.toFixed(2);
+}
+// v45: объём докупки округляем до шага лота — биржа всё равно не примет
+// произвольную дробь, а ровные значения удобнее вводить руками.
+function dnLot(q) {
+  const step = (DN && Number.isFinite(DN.lotStep) && DN.lotStep > 0) ? DN.lotStep : 0.01;
+  const r = Math.round(Math.abs(q) / step) * step;
+  const dec = Math.max(0, Math.min(6, String(step).split('.')[1] ? String(step).split('.')[1].length : 0));
+  return r.toFixed(dec);
+}
 function dnMoney(v, d) {
   if (!Number.isFinite(v)) return '\u2014';
   return (v >= 0 ? '+' : '\u2212') + '$' + Math.abs(v).toFixed(d === undefined ? 2 : d);
@@ -8517,6 +8533,7 @@ function dnRender() {
   const ses = dnSession();
 
   html += dnBlockRehedge(spot, og, linD, a, ses);
+  html += dnBlockScalp();
   html += dnBlockHedge(og, linD, netD, adjust, mode);
   html += dnBlockWorth(og, spot, optLegs);
   html += dnBlockEcon(og, spot);
@@ -8554,6 +8571,8 @@ function dnBlockRehedge(spot, og, linD, a, ses) {
     '<input type="number" class="sc-input" value="' + DN.stepPct + '" min="0.1" max="50" step="0.1" onchange="dnSetStep(this.value)"></div>' +
     '<div class="sc-row"><label class="sc-lab">' + tr('dn_fee') + '</label>' +
     '<input type="number" class="sc-input" value="' + DN.feePct + '" min="0" max="1" step="0.005" onchange="dnSetFee(this.value)"></div>' +
+    '<div class="sc-row"><label class="sc-lab">' + tr('dn_lot') + '</label>' +
+    '<input type="number" class="sc-input" value="' + (DN.lotStep || 0.05) + '" min="0.001" step="0.001" onchange="dnSetLot(this.value)"></div>' +
     '</div>';
 
   h += '<div class="sc-row"><label class="sc-lab">' + tr('dn_anchor') + '</label>' +
@@ -8569,13 +8588,13 @@ function dnBlockRehedge(spot, og, linD, a, ses) {
     const dist = Math.min(Math.abs(spot - up), Math.abs(spot - dn));
     h += '<div class="dn-lvl">' +
       '<div class="dn-lvl-box"><div class="l-t">' + tr('dn_lvl_dn') + '</div><div class="l-p">$' + Math.round(dn) + '</div>' +
-      '<div class="l-d">' + dnFmt((dn - spot) / spot * 100, 2) + '%</div></div>' +
+      '<div class="l-d">' + dnPct((dn - spot) / spot * 100) + '%</div></div>' +
       '<div class="dn-lvl-box"><div class="l-t">' + tr('dn_lvl_up') + '</div><div class="l-p">$' + Math.round(up) + '</div>' +
-      '<div class="l-d">+' + dnFmt((up - spot) / spot * 100, 2) + '%</div></div></div>';
+      '<div class="l-d">' + dnPct((up - spot) / spot * 100) + '%</div></div></div>';
     h += '<div class="dn-act' + (fired && !p ? ' fire' : '') + '">' +
       (fired
-        ? tr('dn_fired', { q: Math.abs(nextAdj).toFixed(3), a: S.asset, d: tr(nextAdj > 0 ? 'dn_buy' : 'dn_sell') })
-        : tr('dn_waiting', { d: '$' + Math.round(dist), q: Math.abs(nextAdj).toFixed(3), a: S.asset })) + '</div>';
+        ? tr('dn_fired', { q: dnLot(nextAdj), a: S.asset, d: tr(nextAdj > 0 ? 'dn_buy' : 'dn_sell') })
+        : tr('dn_waiting', { d: '$' + Math.round(dist), q: dnLot(nextAdj), a: S.asset })) + '</div>';
   } else {
     h += '<div class="dn-act">' + tr('dn_no_anchor') + '</div>';
   }
@@ -8634,9 +8653,12 @@ function dnBlockHedge(og, linD, netD, adjust, mode) {
   h += '<div class="dn-kv"><span>' + tr('dn_net_delta') + '</span><b class="' + (Math.abs(netD) < 0.01 ? 'pos' : 'neg') + '">' + dnFmt(netD, 4) + '</b></div>';
   h += '<div class="dn-kv"><span>' + tr('dn_gamma') + '</span><b>' + dnFmt(og.gamma, 4) + '</b></div>';
   h += '<div class="dn-kv"><span>' + tr('dn_theta') + '</span><b class="neg">' + dnFmt(og.theta, 2) + '</b></div>';
-  h += '<div class="dn-act">' + (Math.abs(adjust) < 0.005
+  // v45: порог «доводить нечего» привязан к шагу лота, а не к 0.005.
+  // Иначе при шаге 0.05 остаток 0.023 округлялся в ноль и экран предлагал
+  // купить 0.00 — формально верно, на деле бессмыслица.
+  h += '<div class="dn-act">' + (parseFloat(dnLot(adjust)) === 0
     ? tr('dn_hedge_ok')
-    : tr(adjust > 0 ? 'dn_hedge_buy' : 'dn_hedge_sell', { q: Math.abs(adjust).toFixed(3), a: S.asset })) + '</div>';
+    : tr(adjust > 0 ? 'dn_hedge_buy' : 'dn_hedge_sell', { q: dnLot(adjust), a: S.asset })) + '</div>';
   h += '</div>';
   return h;
 }
@@ -8748,6 +8770,11 @@ function dnSetFee(v) {
   const n = parseFloat(v);
   if (!Number.isFinite(n) || n < 0) return;
   dnLoad(); DN.feePct = n; dnSave(); dnRender();
+}
+function dnSetLot(v) {
+  const n = parseFloat(v);
+  if (!Number.isFinite(n) || n <= 0) return;
+  dnLoad(); DN.lotStep = n; dnSave(); dnRender();
 }
 function dnSetMode(v) { dnLoad(); DN.deltaMode = (v === 'atm') ? 'atm' : 'chain'; dnSave(); dnRender(); }
 function dnSetBuild(b) { dnLoad(); DN.build = (b === 'put') ? 'put' : 'call'; dnSave(); dnRender(); }
@@ -9297,6 +9324,372 @@ async function loadHistoryDeribit(setProgress) {
     const rb = document.getElementById('history-refresh-btn');
     if (rb) { rb.disabled = false; rb.textContent = '\u27f3'; }
   }
+}
+
+
+// ═══════════════════════════════════════════════════
+// v47: СЧЁТЧИК ГАММА-СКАЛЬПА
+//
+// Зачем. closed-pnl считает закрытие фьючерса от СРЕДНЕЙ цены всей позиции,
+// из-за чего переоценка базового хеджа смешивается с результатом рехеджей.
+// Пример: базовый шорт 0.6 @2517, добавил 0.05 @2700, откупил 0.05 @2650 —
+// скальп +2.50, а биржа покажет убыток около −6.
+//
+// Здесь берём сырые исполнения и разбираем их стеком LIFO: встречная сделка
+// закрывает ПОСЛЕДНИЙ лот, поэтому базовый хедж остаётся внизу и рехеджами
+// не затрагивается.
+//
+// Деление итога на «скальп» и «перенос» — соглашение, а не объективная
+// величина. Объективен только суммарный результат, поэтому каждый расчёт
+// сверяется с денежным потоком: расхождение больше цента означает ошибку.
+// ═══════════════════════════════════════════════════
+
+const SCALP_KEY = 'oa-scalp-v1';
+
+// ── Движок: базовый хедж отдельно, рехеджи стеком LIFO ──
+//
+// Важная поправка к первоначальной методике. Предполагалось, что базовый хедж
+// просто лежит внизу стека и рехеджами не затрагивается. Это верно, только пока
+// хедж наращивают. При дельта-хедже падение цены заставляет ОТКУПАТЬ, то есть
+// уменьшать шорт, и LIFO тут же закрывает часть базового лота по его цене —
+// в «скальп» попадает переоценка базы, а не оборот рехеджа.
+//
+// Поэтому базовый объём выделяем в защищённый лот: он не участвует в
+// сопоставлении и даёт только перенос. Всё сверх него образует надстройку,
+// внутри которой встречные сделки закрывают друг друга по LIFO независимо от
+// знака — откуп при отсутствии шорта в надстройке открывает лонг.
+//
+// fills: [{ts, side:'Buy'|'Sell', price, qty, fee}] по возрастанию времени
+// baseQty: объём базового хеджа со знаком (минус — шорт). 0 — базы нет.
+function calcScalpBook(fills, mark, baseQty) {
+  const lots = [];      // надстройка: {dir:+1/-1, price, qty, ts}
+  const pairs = [];
+  let realized = 0, fees = 0, cash = 0;
+
+  let baseLeft = Math.abs(parseFloat(baseQty) || 0);
+  const baseDir = (parseFloat(baseQty) || 0) < 0 ? -1 : 1;
+  let basePx = 0, baseFilled = 0;
+
+  for (let i = 0; i < (fills || []).length; i++) {
+    const f = fills[i];
+    const price = parseFloat(f.price), qty = Math.abs(parseFloat(f.qty));
+    if (!Number.isFinite(price) || !Number.isFinite(qty) || qty <= 0) continue;
+    const dir = (String(f.side).toLowerCase() === 'buy') ? 1 : -1;
+    fees += Number.isFinite(parseFloat(f.fee)) ? Math.abs(parseFloat(f.fee)) : 0;
+    cash += (dir === -1 ? 1 : -1) * price * qty;
+
+    let left = qty;
+
+    // Сначала набираем базовый лот — первые сделки в его сторону
+    if (baseLeft > 1e-12 && dir === baseDir) {
+      const take = Math.min(left, baseLeft);
+      basePx = (basePx * baseFilled + price * take) / (baseFilled + take);
+      baseFilled += take;
+      baseLeft -= take;
+      left -= take;
+    }
+
+    // Остальное — надстройка
+    while (left > 1e-12 && lots.length && lots[lots.length - 1].dir === -dir) {
+      const top = lots[lots.length - 1];
+      const take = Math.min(left, top.qty);
+      const pnl = (dir === 1) ? (top.price - price) * take : (price - top.price) * take;
+      realized += pnl;
+      pairs.push({
+        ts: f.ts, openTs: top.ts,
+        openPrice: top.price, closePrice: price,
+        qty: take, dir: top.dir, pnl: pnl
+      });
+      top.qty -= take;
+      left -= take;
+      if (top.qty <= 1e-12) lots.pop();
+    }
+    if (left > 1e-12) lots.push({ dir: dir, price: price, qty: left, ts: f.ts });
+  }
+
+  const m = parseFloat(mark);
+  let pos = baseDir * baseFilled, carry = 0, baseCarry = 0;
+  if (Number.isFinite(m) && baseFilled > 1e-12) {
+    baseCarry = (baseDir === -1) ? (basePx - m) * baseFilled : (m - basePx) * baseFilled;
+  }
+  for (let i = 0; i < lots.length; i++) {
+    const l = lots[i];
+    pos += l.dir * l.qty;
+    if (Number.isFinite(m)) {
+      carry += (l.dir === -1) ? (l.price - m) * l.qty : (m - l.price) * l.qty;
+    }
+  }
+
+  // Сверка: денежный поток плюс остаток позиции по марку должен равняться
+  // сумме реализованного, переноса надстройки и переноса базы
+  let cashFlowCheck = null;
+  if (Number.isFinite(m)) {
+    cashFlowCheck = (cash + pos * m) - (realized + carry + baseCarry);
+  }
+
+  return {
+    scalpRealized: realized,
+    carryUnrealized: carry,
+    baseCarry: baseCarry,
+    basePrice: baseFilled > 0 ? basePx : null,
+    baseQty: baseDir * baseFilled,
+    fees: fees,
+    pos: pos,
+    lots: lots,
+    pairs: pairs,
+    cashFlowCheck: cashFlowCheck
+  };
+}
+
+// ── Исполнения с Bybit ──
+// /v5/execution/list: окно не больше 7 дней, глубина 2 года,
+// до 100 записей на страницу, курсорная пагинация.
+async function fetchExecutions(category, symbol, fromTs, baseCoin) {
+  const out = [];
+  const now = Date.now();
+  const WIN = 7 * 86400000;
+  const start = Math.max(fromTs, now - 2 * 365 * 86400000);
+  const chunks = Math.max(1, Math.ceil((now - start) / WIN));
+
+  for (let c = 0; c < chunks; c++) {
+    const st = start + c * WIN;
+    const en = Math.min(now, st + WIN);
+    let cursor = '';
+    let page = 0;
+    while (page < 10) {
+      const params = {
+        category: category,
+        limit: '100',
+        startTime: String(st),
+        endTime: String(en)
+      };
+      if (symbol) params.symbol = symbol;
+      if (baseCoin) params.baseCoin = baseCoin;
+      if (cursor) params.cursor = cursor;
+      const data = await bybitGetWithProxy('/v5/execution/list', params);
+      if (!data || data.retCode !== 0) {
+        throw new Error(category + ': retCode ' + (data && data.retCode) + ' ' + (data && data.retMsg));
+      }
+      const list = (data.result && data.result.list) || [];
+      for (let i = 0; i < list.length; i++) out.push(list[i]);
+      cursor = (data.result && data.result.nextPageCursor) || '';
+      page++;
+      if (!cursor || list.length < 100) break;
+    }
+  }
+  return out;
+}
+
+// ── Кампания: опционная нога плюс её хедж ──
+function scalpLoad() {
+  try { return JSON.parse(localStorage.getItem(SCALP_KEY) || '{}'); } catch(e) { return {}; }
+}
+function scalpSave(o) {
+  try { localStorage.setItem(SCALP_KEY, JSON.stringify(o)); } catch(e) {}
+}
+function scalpKey() { return (S.exchange || 'bybit') + ':' + (S.asset || 'ETH'); }
+
+// Результат кампании: опцион, скальп, перенос, фандинг, комиссии, итог
+function calcCampaign(optFills, hedgeFills, fundingRows, optLegs, spot, baseQty) {
+  // Опцион: факт по открытым ногам
+  let optPnl = null;
+  for (let i = 0; i < (optLegs || []).length; i++) {
+    const leg = optLegs[i];
+    if (!Number.isFinite(leg.currentMark) || !Number.isFinite(leg.entryPrice)) continue;
+    const v = (leg.direction === 'buy' ? 1 : -1) * (leg.currentMark - leg.entryPrice) * leg.qty;
+    optPnl = (optPnl === null ? 0 : optPnl) + v;
+  }
+
+  const book = calcScalpBook(hedgeFills, spot, baseQty);
+
+  let funding = 0;
+  for (let i = 0; i < (fundingRows || []).length; i++) {
+    const v = parseFloat(fundingRows[i].execFee);
+    // В execution/list фандинг приходит в поле комиссии: положительное
+    // значение означает списание, поэтому знак разворачиваем
+    if (Number.isFinite(v)) funding += -v;
+  }
+
+  let optFees = 0;
+  for (let i = 0; i < (optFills || []).length; i++) {
+    const v = parseFloat(optFills[i].execFee);
+    if (Number.isFinite(v)) optFees += Math.abs(v);
+  }
+
+  const total = (optPnl === null ? 0 : optPnl) + book.scalpRealized
+                + book.carryUnrealized + book.baseCarry
+                - book.fees - optFees + funding;
+
+  return {
+    optPnl: optPnl,
+    optFees: optFees,
+    scalpRealized: book.scalpRealized,
+    carryUnrealized: book.carryUnrealized,
+    baseCarry: book.baseCarry,
+    basePrice: book.basePrice,
+    hedgeFees: book.fees,
+    funding: funding,
+    total: total,
+    pairs: book.pairs,
+    lots: book.lots,
+    pos: book.pos,
+    cashFlowCheck: book.cashFlowCheck
+  };
+}
+
+// ── Реализованная волатильность по дневным свечам ──
+// Публичный kline, ключ не нужен. Сравнивать RV надо с IV входа:
+// позиция окупается, когда реализованная выше уплаченной.
+async function fetchRV(asset, days) {
+  try {
+    const limit = Math.min(1000, days + 2);
+    const r = await fetch('https://api.bybit.com/v5/market/kline?category=spot&symbol=' +
+      encodeURIComponent(asset + 'USDT') + '&interval=D&limit=' + limit);
+    if (!r.ok) return null;
+    const j = await r.json();
+    const list = j && j.result && j.result.list;
+    if (!Array.isArray(list) || list.length < 5) return null;
+    const closes = list.map(function(x){ return parseFloat(x[4]); })
+                       .filter(function(v){ return Number.isFinite(v) && v > 0; })
+                       .reverse();
+    if (closes.length < 5) return null;
+    const lr = [];
+    for (let i = 1; i < closes.length; i++) lr.push(Math.log(closes[i] / closes[i - 1]));
+    let sum = 0;
+    for (let i = 0; i < lr.length; i++) sum += lr[i];
+    const mean = sum / lr.length;
+    let acc = 0;
+    for (let i = 0; i < lr.length; i++) { const d = lr[i] - mean; acc += d * d; }
+    return Math.sqrt(acc / Math.max(1, lr.length - 1)) * Math.sqrt(365) * 100;
+  } catch(e) { return null; }
+}
+
+
+// ── Загрузка кампании и отрисовка ──
+let _scalp = null, _scalpLoading = false, _scalpErr = '';
+let _rv = { d7: null, d14: null, since: null };
+
+function scalpCampaign() {
+  const all = scalpLoad();
+  return all[scalpKey()] || null;
+}
+
+async function scalpRefresh(force) {
+  if (_scalpLoading) return;
+  if (S.exchange !== 'bybit') { _scalpErr = tr('sc_only_bybit'); dnRender(); return; }
+  const optLegs = dnOptLegs();
+  if (!optLegs.length) return;
+  _scalpLoading = true; _scalpErr = '';
+  dnRender();
+  try {
+    const asset = S.asset;
+    const hedgeSym = asset + 'USDT';
+    const ses = dnSession();
+    // Старт кампании: первое исполнение опциона, иначе момент постановки якоря
+    let startTs = ses && ses.startTs ? ses.startTs : (Date.now() - 90 * 86400000);
+
+    const optFills = await fetchExecutions('option', null, startTs - 7 * 86400000, asset);
+    for (let i = 0; i < optFills.length; i++) {
+      const t = parseInt(optFills[i].execTime || '0', 10);
+      if (t && t < startTs) startTs = t;
+    }
+
+    const raw = await fetchExecutions('linear', hedgeSym, startTs, null);
+    const trades = [], funding = [];
+    for (let i = 0; i < raw.length; i++) {
+      const r = raw[i];
+      if (r.execType === 'Funding') { funding.push(r); continue; }
+      if (r.execType && r.execType !== 'Trade') continue;
+      trades.push({
+        ts: parseInt(r.execTime || '0', 10),
+        side: r.side,
+        price: parseFloat(r.execPrice),
+        qty: parseFloat(r.execQty),
+        fee: parseFloat(r.execFee)
+      });
+    }
+    trades.sort(function(a, b){ return a.ts - b.ts; });
+
+    // Базовый хедж: объём первой сделки в сторону хеджа, если не задан вручную
+    dnLoad();
+    let baseQty = DN.baseQty;
+    if (!Number.isFinite(baseQty) || baseQty === 0) {
+      baseQty = trades.length ? (trades[0].side === 'Buy' ? 1 : -1) * Math.abs(trades[0].qty) : 0;
+    }
+
+    _scalp = calcCampaign(optFills, trades, funding, optLegs, S.spotPrice, baseQty);
+    _scalp.startTs = startTs;
+    _scalp.nTrades = trades.length;
+    _scalp.baseUsed = baseQty;
+
+    const days = Math.max(1, Math.round((Date.now() - startTs) / 86400000));
+    const r1 = await fetchRV(asset, 7);
+    const r2 = await fetchRV(asset, 14);
+    const r3 = await fetchRV(asset, days);
+    _rv = { d7: r1, d14: r2, since: r3, days: days };
+  } catch(e) {
+    _scalpErr = e.message || 'error';
+  } finally {
+    _scalpLoading = false;
+    dnRender();
+  }
+}
+
+function dnBlockScalp() {
+  let h = '<div class="sc-card"><div class="sc-card-h">' + tr('sc_h') + '</div>';
+  if (_scalpLoading) {
+    h += '<div class="dn-act">' + tr('sc_loading') + '</div></div>';
+    return h;
+  }
+  if (_scalpErr) {
+    h += '<div class="dn-act">\u26a0\ufe0f ' + _scalpErr + '</div>';
+  }
+  if (!_scalp) {
+    h += '<div class="dn-act">' + tr('sc_empty') + '</div>' +
+         '<div class="dn-act-btns"><button class="dn-mini" onclick="scalpRefresh(true)">' +
+         tr('sc_load') + '</button></div></div>';
+    return h;
+  }
+  const d = _scalp;
+  const row = function(lab, v, sub) {
+    return '<div class="dn-kv"><span>' + lab + (sub ? '<span class="dn-sub">' + sub + '</span>' : '') +
+      '</span><b class="' + dnCls(v) + '">' + dnMoney(v) + '</b></div>';
+  };
+  h += row(tr('sc_opt'), d.optPnl, tr('sc_opt_sub'));
+  h += row(tr('sc_scalp'), d.scalpRealized, tr('sc_scalp_sub', { n: d.pairs.length }));
+  h += row(tr('sc_carry'), d.carryUnrealized + d.baseCarry,
+           tr('sc_carry_sub', { p: d.basePrice ? Math.round(d.basePrice) : '\u2014' }));
+  h += row(tr('sc_funding'), d.funding);
+  h += row(tr('sc_fees'), -(d.hedgeFees + d.optFees));
+  h += '<div class="dn-kv"><span><b>' + tr('sc_total') + '</b></span><b class="' +
+       dnCls(d.total) + '">' + dnMoney(d.total) + '</b></div>';
+
+  if (Number.isFinite(d.cashFlowCheck) && Math.abs(d.cashFlowCheck) > 0.01) {
+    h += '<div class="dn-act fire">' + tr('sc_mismatch', { v: d.cashFlowCheck.toFixed(2) }) + '</div>';
+  }
+
+  // RV против IV входа
+  const ivNow = dnAtmIv();
+  const cmp = function(rv) {
+    if (!Number.isFinite(rv)) return '\u2014';
+    return rv.toFixed(1) + '%';
+  };
+  h += '<div class="dn-cmp-h">' + tr('sc_rv_h') + '</div>';
+  h += '<div class="dn-kv"><span>RV 7\u0434 / 14\u0434 / ' + tr('sc_since') + '</span><b>' +
+       cmp(_rv.d7) + ' / ' + cmp(_rv.d14) + ' / ' + cmp(_rv.since) + '</b></div>';
+  h += '<div class="dn-kv"><span>' + tr('sc_iv_now') + '</span><b>' +
+       (Number.isFinite(ivNow) ? ivNow.toFixed(1) + '%' : '\u2014') + '</b></div>';
+  if (Number.isFinite(_rv.since) && Number.isFinite(ivNow)) {
+    const good = _rv.since > ivNow;
+    h += '<div class="dn-act">' + tr(good ? 'sc_rv_good' : 'sc_rv_bad',
+      { rv: _rv.since.toFixed(1), iv: ivNow.toFixed(1) }) + '</div>';
+  }
+
+  h += '<div class="dn-act-btns"><button class="dn-mini ghost" onclick="scalpRefresh(true)">' +
+       tr('sc_reload') + '</button></div>';
+  h += '<div class="dn-note">' + tr('sc_note') + '</div>';
+  h += '</div>';
+  return h;
 }
 
 // PRICE ALERTS
@@ -10500,6 +10893,31 @@ const I18N = {
   en: {
     t_balance:"Balance / Available", t_dhedge:"Delta hedging", t_alerts:"Price alerts",
     t_theme:"Switch theme", t_rotate:"Rotate screen", t_about:"About & legal info",
+    // v47: gamma scalp
+    sc_h:"\u0420\u0435\u0437\u0443\u043b\u044c\u0442\u0430\u0442 \u043a\u0430\u043c\u043f\u0430\u043d\u0438\u0438",
+    sc_loading:"Loading executions from the exchange\u2026",
+    sc_empty:"Executions are not loaded yet. The exchange knows every fill \u2014 pull them and the journal fills itself.",
+    sc_load:"Load",
+    sc_reload:"Reload",
+    sc_only_bybit:"Executions are available for Bybit only so far.",
+    sc_opt:"Option",
+    sc_opt_sub:"mark minus entry",
+    sc_scalp:"Scalp realised",
+    sc_scalp_sub:"{n} closed round trips",
+    sc_carry:"Hedge carry",
+    sc_carry_sub:"base at {p}",
+    sc_funding:"Funding",
+    sc_fees:"Fees",
+    sc_total:"Campaign total",
+    sc_mismatch:"Cash-flow check off by {v}$ \u2014 the split is unreliable, the total is still correct.",
+    sc_rv_h:"Realised volatility against the IV you paid",
+    sc_since:"since entry",
+    sc_iv_now:"IV of the position",
+    sc_rv_good:"RV {rv}% above IV {iv}% \u2014 the position is earning its theta back.",
+    sc_rv_bad:"RV {rv}% below IV {iv}% \u2014 gamma is not covering theta at this pace.",
+    sc_note:"Scalp is round trips of the rehedge overlay. The base hedge is held aside and only carries \u2014 otherwise a buy-back would close part of the base at its own price and its revaluation would land in the scalp figure. Splitting the total this way is a convention; only the total is objective, which is what the cash-flow check verifies.",
+    // v45: lot step
+    dn_lot:"Lot step",
     // v44: history error
     hist_err:"Could not load trade history.",
     // v42: connolly screen
@@ -10894,6 +11312,31 @@ const I18N = {
   ru: {
     t_balance:"\u0411\u0430\u043b\u0430\u043d\u0441 / \u0414\u043e\u0441\u0442\u0443\u043f\u043d\u043e", t_dhedge:"\u0414\u0435\u043b\u044c\u0442\u0430-\u0445\u0435\u0434\u0436\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u0435", t_alerts:"\u0410\u043b\u0435\u0440\u0442\u044b \u043f\u043e \u0446\u0435\u043d\u0435",
     t_theme:"\u0421\u043c\u0435\u043d\u0438\u0442\u044c \u0442\u0435\u043c\u0443", t_rotate:"\u041f\u043e\u0432\u0435\u0440\u043d\u0443\u0442\u044c \u044d\u043a\u0440\u0430\u043d", t_about:"\u041e \u043f\u0440\u0438\u043b\u043e\u0436\u0435\u043d\u0438\u0438 \u0438 \u044e\u0440\u0438\u0434\u0438\u0447\u0435\u0441\u043a\u0430\u044f \u0438\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0438\u044f",
+    // v47: gamma skalp
+    sc_h:"\u0420\u0435\u0437\u0443\u043b\u044c\u0442\u0430\u0442 \u043a\u0430\u043c\u043f\u0430\u043d\u0438\u0438",
+    sc_loading:"\u0417\u0430\u0433\u0440\u0443\u0436\u0430\u044e \u0438\u0441\u043f\u043e\u043b\u043d\u0435\u043d\u0438\u044f \u0441 \u0431\u0438\u0440\u0436\u0438\u2026",
+    sc_empty:"\u0418\u0441\u043f\u043e\u043b\u043d\u0435\u043d\u0438\u044f \u0435\u0449\u0451 \u043d\u0435 \u0437\u0430\u0433\u0440\u0443\u0436\u0435\u043d\u044b. \u0411\u0438\u0440\u0436\u0430 \u0437\u043d\u0430\u0435\u0442 \u043a\u0430\u0436\u0434\u0443\u044e \u0441\u0434\u0435\u043b\u043a\u0443 \u2014 \u043f\u043e\u0434\u0442\u044f\u043d\u0438, \u0438 \u0436\u0443\u0440\u043d\u0430\u043b \u0437\u0430\u043f\u043e\u043b\u043d\u0438\u0442\u0441\u044f \u0441\u0430\u043c.",
+    sc_load:"\u0417\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044c",
+    sc_reload:"\u041e\u0431\u043d\u043e\u0432\u0438\u0442\u044c",
+    sc_only_bybit:"\u0418\u0441\u043f\u043e\u043b\u043d\u0435\u043d\u0438\u044f \u043f\u043e\u043a\u0430 \u0434\u043e\u0441\u0442\u0443\u043f\u043d\u044b \u0442\u043e\u043b\u044c\u043a\u043e \u0434\u043b\u044f Bybit.",
+    sc_opt:"\u041e\u043f\u0446\u0438\u043e\u043d",
+    sc_opt_sub:"mark \u043c\u0438\u043d\u0443\u0441 \u0432\u0445\u043e\u0434",
+    sc_scalp:"\u0421\u043a\u0430\u043b\u044c\u043f \u0440\u0435\u0430\u043b\u0438\u0437\u043e\u0432\u0430\u043d\u043d\u044b\u0439",
+    sc_scalp_sub:"\u0437\u0430\u043a\u0440\u044b\u0442\u044b\u0445 \u043e\u0431\u043e\u0440\u043e\u0442\u043e\u0432: {n}",
+    sc_carry:"\u041f\u0435\u0440\u0435\u043d\u043e\u0441 \u0445\u0435\u0434\u0436\u0430",
+    sc_carry_sub:"\u0431\u0430\u0437\u0430 \u043f\u043e {p}",
+    sc_funding:"\u0424\u0430\u043d\u0434\u0438\u043d\u0433",
+    sc_fees:"\u041a\u043e\u043c\u0438\u0441\u0441\u0438\u0438",
+    sc_total:"\u0418\u0442\u043e\u0433\u043e \u043f\u043e \u043a\u0430\u043c\u043f\u0430\u043d\u0438\u0438",
+    sc_mismatch:"\u0421\u0432\u0435\u0440\u043a\u0430 \u0441 \u0434\u0435\u043d\u0435\u0436\u043d\u044b\u043c \u043f\u043e\u0442\u043e\u043a\u043e\u043c \u0440\u0430\u0441\u0445\u043e\u0434\u0438\u0442\u0441\u044f \u043d\u0430 {v}$ \u2014 \u0440\u0430\u0437\u0431\u0438\u0432\u043a\u0435 \u0434\u043e\u0432\u0435\u0440\u044f\u0442\u044c \u043d\u0435\u043b\u044c\u0437\u044f, \u0438\u0442\u043e\u0433 \u043f\u0440\u0438 \u044d\u0442\u043e\u043c \u0432\u0435\u0440\u0435\u043d.",
+    sc_rv_h:"\u0420\u0435\u0430\u043b\u0438\u0437\u043e\u0432\u0430\u043d\u043d\u0430\u044f \u0432\u043e\u043b\u0430\u0442\u0438\u043b\u044c\u043d\u043e\u0441\u0442\u044c \u043f\u0440\u043e\u0442\u0438\u0432 \u0443\u043f\u043b\u0430\u0447\u0435\u043d\u043d\u043e\u0439 IV",
+    sc_since:"\u0441 \u0432\u0445\u043e\u0434\u0430",
+    sc_iv_now:"IV \u043f\u043e\u0437\u0438\u0446\u0438\u0438",
+    sc_rv_good:"RV {rv}% \u0432\u044b\u0448\u0435 IV {iv}% \u2014 \u043f\u043e\u0437\u0438\u0446\u0438\u044f \u043e\u0442\u0440\u0430\u0431\u0430\u0442\u044b\u0432\u0430\u0435\u0442 \u0442\u0435\u0442\u0443.",
+    sc_rv_bad:"RV {rv}% \u043d\u0438\u0436\u0435 IV {iv}% \u2014 \u0433\u0430\u043c\u043c\u0430 \u043d\u0435 \u043f\u043e\u043a\u0440\u044b\u0432\u0430\u0435\u0442 \u0442\u0435\u0442\u0443 \u043f\u0440\u0438 \u0442\u0430\u043a\u043e\u043c \u0442\u0435\u043c\u043f\u0435.",
+    sc_note:"\u0421\u043a\u0430\u043b\u044c\u043f \u2014 \u044d\u0442\u043e \u0437\u0430\u043a\u0440\u044b\u0442\u044b\u0435 \u043e\u0431\u043e\u0440\u043e\u0442\u044b \u043d\u0430\u0434\u0441\u0442\u0440\u043e\u0439\u043a\u0438 \u043d\u0430\u0434 \u0431\u0430\u0437\u043e\u0432\u044b\u043c \u0445\u0435\u0434\u0436\u0435\u043c. \u0411\u0430\u0437\u0430 \u0434\u0435\u0440\u0436\u0438\u0442\u0441\u044f \u043e\u0442\u0434\u0435\u043b\u044c\u043d\u043e \u0438 \u0434\u0430\u0451\u0442 \u0442\u043e\u043b\u044c\u043a\u043e \u043f\u0435\u0440\u0435\u043d\u043e\u0441: \u0438\u043d\u0430\u0447\u0435 \u043e\u0442\u043a\u0443\u043f \u0437\u0430\u043a\u0440\u044b\u0432\u0430\u043b \u0431\u044b \u0447\u0430\u0441\u0442\u044c \u0431\u0430\u0437\u044b \u043f\u043e \u0435\u0451 \u0446\u0435\u043d\u0435, \u0438 \u043f\u0435\u0440\u0435\u043e\u0446\u0435\u043d\u043a\u0430 \u0431\u0430\u0437\u044b \u043f\u043e\u043f\u0430\u0434\u0430\u043b\u0430 \u0431\u044b \u0432 \u0441\u043a\u0430\u043b\u044c\u043f. \u0421\u0430\u043c\u043e \u0434\u0435\u043b\u0435\u043d\u0438\u0435 \u0438\u0442\u043e\u0433\u0430 \u2014 \u0441\u043e\u0433\u043b\u0430\u0448\u0435\u043d\u0438\u0435; \u043e\u0431\u044a\u0435\u043a\u0442\u0438\u0432\u0435\u043d \u0442\u043e\u043b\u044c\u043a\u043e \u0438\u0442\u043e\u0433, \u0438 \u0438\u043c\u0435\u043d\u043d\u043e \u0435\u0433\u043e \u043f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0441\u0432\u0435\u0440\u043a\u0430 \u0441 \u0434\u0435\u043d\u0435\u0436\u043d\u044b\u043c \u043f\u043e\u0442\u043e\u043a\u043e\u043c.",
+    // v45: shag lota
+    dn_lot:"\u0428\u0430\u0433 \u043b\u043e\u0442\u0430",
     // v44: oshibka istorii
     hist_err:"\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044c \u0438\u0441\u0442\u043e\u0440\u0438\u044e \u0441\u0434\u0435\u043b\u043e\u043a.",
     // v42: razdel Konnolli
