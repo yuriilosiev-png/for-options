@@ -12,7 +12,7 @@
 <meta name="x5-page-mode" content="app">
 <meta name="browsermode" content="application">
 <link rel="manifest" href="manifest.json">
-<title>PnL Journal</title>
+<title>Crypto Options</title>
 <style>
 :root {
   --bg: #0a0e1a;
@@ -250,9 +250,10 @@ body {
 /* touch-action:none на слайдерах — браузер не перехватывает pan для body scroll */
 /* ── ALERTS ──────────────────────────────────── */
 #alert-btn {
+  /* v48: крупнее — кнопка часто нужна, а попасть по ней было тесно */
   position: relative; background: none; border: 1.5px solid var(--border2);
-  border-radius: 8px; padding: 4px 10px; cursor: pointer; color: var(--text2);
-  font-size: 18px; line-height: 1; transition: border-color .2s;
+  border-radius: 10px; padding: 6px 13px; cursor: pointer; color: var(--text2);
+  font-size: 24px; line-height: 1; transition: border-color .2s;
 }
 #alert-btn:hover { border-color: var(--accent); }
 #alert-btn-badge {
@@ -1525,7 +1526,7 @@ body.dialog-open #tabbar { display: none; }
 
   <!-- TOP BAR -->
   <div id="topbar">
-    <div id="logo">⬡ PnL JOURNAL</div>
+    <div id="logo">⬡ CRYPTO OPTIONS</div>
     <button class="exchange-btn active" onclick="setExchange('bybit')">Bybit</button>
     <button class="exchange-btn" onclick="setExchange('deribit')">Deribit</button>
     <div id="price-badge" class="loading">$<span id="spot-price-display">⏳</span></div>
@@ -1644,7 +1645,6 @@ body.dialog-open #tabbar { display: none; }
         <option value="1" data-i18n="tab_positions">Позиции</option>
         <option value="2" data-i18n="tab_options">Опционы</option>
         <option value="3" data-i18n="tab_iv">IV rank</option>
-        <option value="4" data-i18n="tab_connolly">Коннолли</option>
       </select>
     </div>
     <p style="margin:0 0 10px" data-i18n-html="about_p1"><strong style="color:var(--text)">Журнал PnL</strong> — журнал сделок и аналитический калькулятор по опционам и фьючерсам. Закрытые сделки читаются по ключу только на чтение; цены берутся из публичных API бирж.</p>
@@ -1840,7 +1840,6 @@ body.dialog-open #tabbar { display: none; }
       <span>(<span id="legs-count">0</span>) <span data-i18n="legs_positions">Позиции</span></span>
       <button class="leg-action-btn primary" onclick="openAddLegModal()" style="margin-left:8px" data-i18n="btn_add">+ Добавить</button>
       <button class="leg-action-btn import-btn" onclick="importPositions()" data-i18n="btn_import">⬇ Импорт</button>
-      <button class="leg-action-btn" onclick="openStrangleCalc()" style="border-color:var(--accent);color:var(--accent)" title="Калькулятор связки Short Strangle" data-i18n-title="t_calc" data-i18n="btn_calc">🧮 Рассчитать</button>
 
       <div id="delta-pill" style="display:none"></div>
     </div>
@@ -2105,8 +2104,8 @@ body.dialog-open #tabbar { display: none; }
     <span class="ti-tx" data-i18n="tab_iv">IV rank</span>
   </div>
   <div class="tab-item" data-tab="4" onclick="goTab(4)">
-    <span class="ti-ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="tbPyL" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8ee6ff"/><stop offset="1" stop-color="#2a7fcf"/></linearGradient><linearGradient id="tbPyR" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a7fcf"/><stop offset="1" stop-color="#0a3a7a"/></linearGradient></defs><polygon points="12,3.5 3,19 12,19" fill="url(#tbPyL)"/><polygon points="12,3.5 21,19 12,19" fill="url(#tbPyR)"/></svg></span>
-    <span class="ti-tx" data-i18n="tab_connolly">Коннолли</span>
+    <span class="ti-ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="tbPyL" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8ee6ff"/><stop offset="1" stop-color="#2a7fcf"/></linearGradient><linearGradient id="tbPyR" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a7fcf"/><stop offset="1" stop-color="#0a3a7a"/></linearGradient></defs><path d="M8 3v5" stroke="url(#tbPyL)" stroke-width="2" stroke-linecap="round"/><path d="M16 3v5" stroke="url(#tbPyL)" stroke-width="2" stroke-linecap="round"/><rect x="5" y="8" width="14" height="7" rx="2.5" fill="url(#tbPyL)"/><path d="M12 15v3.5" stroke="url(#tbPyR)" stroke-width="2.4" stroke-linecap="round"/><path d="M8.5 20.5h7" stroke="url(#tbPyR)" stroke-width="2.4" stroke-linecap="round"/></svg></span>
+    <span class="ti-tx" data-i18n="tab_api">API</span>
   </div>
 </div>
 
@@ -2236,119 +2235,6 @@ body.dialog-open #tabbar { display: none; }
 </div>
 
 <!-- ─── STRANGLE CALC MODAL (ЭТАП 3) ─── -->
-<div id="strangle-calc-modal">
-  <div id="sc-topbar">
-    <div class="sc-title" data-i18n="sc_title">🧮 Калькулятор TP/SL</div>
-    <button class="sc-help-btn" id="sc-help-btn" onclick="scToggleHelp()" title="Как это работает" data-i18n-title="sc_help_t">?</button>
-    <button class="p-close-btn" onclick="closeStrangleCalc()" title="Закрыть">✕</button>
-  </div>
-  <div id="sc-content">
-    <div id="sc-status" class="sc-status"></div>
-
-    <div class="sc-card" id="sc-help">
-      <div class="sc-card-h" data-i18n="sc_help_h">Как этим пользоваться</div>
-      <div class="sc-help-step"><span class="sc-help-n">1</span><span data-i18n-html="sc_help_1">Выбери ноги. Если позиция уже открыта — она подтянется из портфеля. Если позиций нет, калькулятор сам подберёт выгодные страйки.</span></div>
-      <div class="sc-help-step"><span class="sc-help-n">2</span><span data-i18n-html="sc_help_2">В левое поле вводишь <b>mark-цену опциона</b> — ровно то, что просит Bybit в поле «Цена маркировки». Справа сразу видишь <b>цену актива</b>, при которой эта mark будет достигнута сегодня.</span></div>
-      <div class="sc-help-step"><span class="sc-help-n">3</span><span data-i18n-html="sc_help_3">Работает и наоборот: вводишь цену ETH — калькулятор считает mark опциона. Оба поля живые, пересчёт идёт по Black-Scholes с текущим временем до экспирации и IV.</span></div>
-      <div class="sc-help-step"><span class="sc-help-n">4</span><span data-i18n-html="sc_help_4">Рядом с каждым уровнем — <b>P&amp;L</b> от текущего mark: сколько заработаешь на тейке и потеряешь на стопе с учётом количества контрактов.</span></div>
-      <div class="sc-help-step"><span class="sc-help-n">5</span><span data-i18n-html="sc_help_5">Блок «Подбор по коридору» внизу заполнит поля автоматически: задаёшь, насколько уйдёт цена и за сколько дней. «Применить на график» рисует уровни пунктиром.</span></div>
-    </div>
-
-    <div class="sc-card">
-      <div class="sc-card-h" data-i18n="sc_src_h">1 · Ноги и экспирация</div>
-      <div class="sc-grid2">
-        <div class="sc-kv"><span data-i18n="sc_spot">Цена базового актива</span><b id="sc-spot-val">—</b></div>
-        <div class="sc-kv"><span data-i18n="sc_dte">До экспирации</span><b id="sc-dte-val">—</b></div>
-      </div>
-      <!-- v32: предупреждение о разных датах экспирации в позиции -->
-      <div id="sc-multi-badge" class="sc-multi-badge"></div>
-      <div class="sc-row">
-        <label class="sc-lab" data-i18n="sc_asset">Базовый актив</label>
-        <select id="sc-asset" class="sc-select" onchange="scOnAssetChange()"></select>
-      </div>
-      <div class="sc-row">
-        <label class="sc-lab" data-i18n="sc_source">Источник ног</label>
-        <select id="sc-source" class="sc-select" onchange="scOnSourceChange()">
-          <option value="pos" data-i18n="sc_source_pos">Открытая позиция</option>
-          <option value="auto" data-i18n="sc_source_auto">Автоподбор страйков</option>
-        </select>
-      </div>
-      <div class="sc-row" id="sc-legpick-row">
-        <label class="sc-lab" data-i18n="sc_legpick">Ноги в расчёте</label>
-        <div id="sc-legpick"></div>
-      </div>
-      <div class="sc-row" id="sc-exp-row">
-        <label class="sc-lab" data-i18n="sc_exp">Экспирация</label>
-        <select id="sc-exp" class="sc-select" onchange="scOnExpChange()"></select>
-      </div>
-      <div class="sc-row">
-        <label class="sc-lab" data-i18n="sc_qty">Контрактов</label>
-        <input type="number" id="sc-qty" class="sc-input" value="1" min="0.01" step="0.01"
-               oninput="scOnQtyChange()">
-      </div>
-    </div>
-
-    <div class="sc-card">
-      <div class="sc-card-h" data-i18n="sc_tpsl_h">2 · TP/SL — как на Bybit</div>
-      <div class="sc-sub" data-i18n="sc_tpsl_hint">Слева — mark-цена опциона (её вводишь на бирже). Справа — цена базового актива, при которой эта mark достигается сегодня, с учётом греков. Меняй любое из двух полей — второе пересчитается.</div>
-      <div id="sc-summary" class="sc-sum"></div>
-      <div id="sc-tpsl"></div>
-    </div>
-
-    <div class="sc-card">
-      <div class="sc-card-h" data-i18n="sc_auto_h">3 · Подбор уровней по коридору</div>
-      <div class="sc-row sc-auto-only">
-        <label class="sc-lab" data-i18n="sc_mode">Подбор страйков</label>
-        <select id="sc-mode" class="sc-select" onchange="scRecalc()">
-          <option value="delta" data-i18n="sc_mode_delta">По целевой дельте (обе ноги)</option>
-          <option value="premium" data-i18n="sc_mode_prem">Равные премии (пут под колл)</option>
-        </select>
-      </div>
-      <div class="sc-row sc-auto-only">
-        <label class="sc-lab"><span data-i18n="sc_delta">Целевая |дельта| ноги</span>
-          <b id="sc-delta-val">0.20</b></label>
-        <input type="range" id="sc-delta" class="sc-range" min="5" max="40" step="1" value="20"
-               oninput="scRecalc()">
-        <div class="sc-sub" data-i18n="sc_sub_delta">Дельта ≈ шанс, что страйк заденет к экспирации. 0.20 → примерно 1 из 5. Меньше дельта — дальше страйк и меньше премия, но спокойнее.</div>
-      </div>
-      <div class="sc-row">
-        <label class="sc-lab"><span data-i18n="sc_corridor">Ширина коридора</span>
-          <b id="sc-corridor-val">—</b></label>
-        <input type="range" id="sc-corridor" class="sc-range" min="0.5" max="10" step="0.1" value="2.5"
-               oninput="scOnCorridorSlider()">
-        <div class="sc-bnd">
-          <div class="sc-bnd-f">
-            <span class="sc-bnd-cap sc-lvl-dn" data-i18n="sc_bound_dn">▼ нижняя граница, $</span>
-            <input type="number" class="sc-input sc-bb-in" id="sc-bnd-dn" step="1" min="0"
-                   inputmode="decimal" oninput="scOnBoundInput('dn')">
-          </div>
-          <div class="sc-bnd-f">
-            <span class="sc-bnd-cap sc-lvl-up" data-i18n="sc_bound_up">▲ верхняя граница, $</span>
-            <input type="number" class="sc-input sc-bb-in" id="sc-bnd-up" step="1" min="0"
-                   inputmode="decimal" oninput="scOnBoundInput('up')">
-          </div>
-        </div>
-        <div class="sc-sub" data-i18n="sc_sub_corr">Как далеко уйдёт цена, прежде чем сработают ордера. Это то самое движение, от которого защищает стоп — узкий коридор (менее 2%) обычно бессмысленен.</div>
-      </div>
-      <div class="sc-row">
-        <label class="sc-lab"><span data-i18n="sc_dtrig">Дней до срабатывания</span>
-          <b id="sc-dtrig-val">—</b></label>
-        <input type="range" id="sc-dtrig" class="sc-range" min="0" max="30" step="0.5" value="2"
-               oninput="scOnDtrigChange()">
-        <div class="sc-sub" data-i18n="sc_sub_dtrig">За сколько дней цена дойдёт до границы. Стоп ловит резкий бросок → ставь 1–2. Чем больше дней, тем сильнее распад удешевляет опцион и тем меньше смысла в стопе.</div>
-      </div>
-      <div id="sc-levels" class="sc-levels"></div>
-      <button class="sc-fixbtn" id="sc-fillbtn" onclick="scFillFromCorridor()"
-              data-i18n="sc_fill">↧ Заполнить поля TP/SL из коридора</button>
-    </div>
-
-    <div class="sc-disclaimer" data-i18n="sc_disclaimer">Расчёт информационный, по модели Black-Scholes. Ордера ставятся вручную на бирже. Не является финансовым советом.</div>
-  </div>
-  <div id="sc-footer">
-    <button class="sc-btn" onclick="closeStrangleCalc()" data-i18n="btn_close">Закрыть</button>
-    <button class="sc-btn primary" onclick="scApply()" data-i18n="sc_apply">Применить на график</button>
-  </div>
-</div>
 
 <!-- ═══ v42: РАЗДЕЛ «КОННОЛЛИ» — дельта-нейтральный гамма-скальпинг ═══ -->
 <div id="connolly-modal">
@@ -4201,6 +4087,9 @@ function scOptionLegs() {
 
 // ── Открытие модалки ────────────────────────────────
 async function openStrangleCalc() {
+  // v48: калькулятор TP/SL удалён вместе с разметкой. Функция оставлена
+  // заглушкой, чтобы случайный старый вызов не ронял страницу.
+  if (!document.getElementById('strangle-calc-modal')) return;
   const m = scEl('strangle-calc-modal');
   if (!m) return;
   m.classList.add('open');
@@ -8847,33 +8736,9 @@ function scSetPage(i) {
 }
 
 // ── Свайп между страницами ──
-(function initScSwipe() {
-  let x0 = null, y0 = null, t0 = 0;
-  function isControl(el) {
-    while (el && el !== document.body) {
-      const tag = (el.tagName || '').toLowerCase();
-      if (tag === 'input' || tag === 'select' || tag === 'textarea' || tag === 'button') return true;
-      el = el.parentElement;
-    }
-    return false;
-  }
-  document.addEventListener('touchstart', function(e) {
-    const m = document.getElementById('strangle-calc-modal');
-    if (!m || !m.classList.contains('open')) return;
-    if (isControl(e.target)) { x0 = null; return; }
-    x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; t0 = Date.now();
-  }, { passive: true });
-  document.addEventListener('touchend', function(e) {
-    if (x0 === null) return;
-    const t = e.changedTouches[0];
-    const dx = t.clientX - x0, dy = t.clientY - y0;
-    x0 = null;
-    if (Date.now() - t0 > 700) return;
-    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.6) return;
-    // v42: страниц в «Расчётах» больше нет, свайп отдан общей навигации
-    return;
-  }, { passive: true });
-})();
+// v48.2: мёртвый обработчик свайпа по страницам «Расчётов» удалён —
+// сама разметка убрана в v48, жест никуда не вёл.
+
 
 
 // ═══════════════════════════════════════════════════
@@ -8997,6 +8862,7 @@ function renderHistoryStats2() {
 // Баннер про API здесь не нужен: в демо-полосе уже есть кнопка подключения,
 // два окна подряд только раздражали бы.
 function startOnHistory() {
+  initTabbarWatch();
   try {
     // v41: открываем раздел, выбранный пользователем; по умолчанию журнал
     goTab(getStartTab());
@@ -9056,7 +8922,7 @@ function histCacheWrite(trades, keys) {
 // ═══════════════════════════════════════════════════
 
 const TAB_KEY = 'oa-start-tab';
-const TAB_SCREENS = ['history-modal', 'positions-modal', null, 'vol-modal', 'connolly-modal'];
+const TAB_SCREENS = ['history-modal', 'positions-modal', null, 'vol-modal', null];
 let _tab = 2;
 
 function _tabCloseAll() {
@@ -9076,6 +8942,27 @@ function _tabMark(i) {
   }
 }
 
+// v48.1: наблюдатель за состоянием окон.
+// Раньше панель показывалась обратно только через обёртку closeModal. Но окно
+// можно закрыть и мимо неё — аппаратной кнопкой «Назад», которая обрабатывается
+// в нативной части и просто снимает класс с элемента. Тогда body.dialog-open
+// оставался навсегда, и нижняя панель больше не появлялась.
+// Теперь следим за самими окнами, а не за тем, кто их закрыл.
+function initTabbarWatch() {
+  try {
+    if (typeof MutationObserver !== 'function') return;
+    const obs = new MutationObserver(function(){ tabbarSync(); });
+    const nodes = document.querySelectorAll('.modal-overlay, #alert-panel');
+    for (let i = 0; i < nodes.length; i++) {
+      obs.observe(nodes[i], { attributes: true, attributeFilter: ['class', 'style'] });
+    }
+    // Подстраховка: если окно закроется способом, которого мы не предусмотрели,
+    // состояние починится при следующем касании экрана
+    document.addEventListener('touchend', function(){ setTimeout(tabbarSync, 0); }, { passive: true });
+    document.addEventListener('click', function(){ setTimeout(tabbarSync, 0); }, { passive: true });
+  } catch(e) { console.warn('[tabbar watch]', e.message); }
+}
+
 // Панель прячется, пока открыт любой диалог (.modal-overlay) или панель алертов
 function tabbarSync() {
   try {
@@ -9088,6 +8975,11 @@ function tabbarSync() {
 
 function goTab(i) {
   i = Math.max(0, Math.min(TAB_SCREENS.length - 1, i | 0));
+  if (i === 4) {                       // v48: API — диалог поверх текущего раздела
+    try { window.openConnectModal(); } catch(e) { console.warn('[tab]', e.message); }
+    tabbarSync();
+    return;
+  }
   _tabCloseAll();
   _tabMark(i);
   try {
@@ -9095,7 +8987,9 @@ function goTab(i) {
     if (i === 0) window.openHistoryModal();
     else if (i === 1) window.openPositionsModal();
     else if (i === 3) window.openVolModal();
-    else if (i === 4) window.openConnolly();
+    // v48: пятая вкладка открывает окно подключения ключей.
+    // Это диалог, а не раздел: панель под ним прячется, подсветка не переезжает.
+    else if (i === 4) window.openConnectModal();
   } catch(e) { console.warn('[tab]', e.message); }
   tabbarSync();
 }
@@ -9104,10 +8998,11 @@ function setStartTab(v) {
   try { localStorage.setItem(TAB_KEY, String(parseInt(v, 10) || 0)); } catch(e) {}
 }
 function getStartTab() {
+  // v48: по умолчанию открываются «Опционы» — приложение снова про них
   try {
     const v = parseInt(localStorage.getItem(TAB_KEY), 10);
-    return (v >= 0 && v < TAB_SCREENS.length) ? v : 0;
-  } catch(e) { return 0; }
+    return (v >= 0 && v <= 3) ? v : 2;
+  } catch(e) { return 2; }
 }
 
 // Открытие и закрытие разделов из старых кнопок тоже должно двигать подсветку.
@@ -9115,7 +9010,7 @@ function getStartTab() {
 (function wrapScreenFns() {
   const pairs = [
     ['openHistoryModal', 0], ['openPositionsModal', 1],
-    ['openVolModal', 3], ['openConnolly', 4]
+    ['openVolModal', 3]
   ];
   for (let i = 0; i < pairs.length; i++) {
     const name = pairs[i][0], idx = pairs[i][1];
@@ -9128,7 +9023,7 @@ function getStartTab() {
       return r;
     };
   }
-  const closers = ['closeHistoryModal', 'closePositionsModal', 'closeVolModal', 'closeConnolly'];
+  const closers = ['closeHistoryModal', 'closePositionsModal', 'closeVolModal'];
   for (let i = 0; i < closers.length; i++) {
     const name = closers[i];
     const fn = window[name];
@@ -9152,35 +9047,8 @@ function getStartTab() {
   };
 })();
 
-// Свайп между вкладками. Игнорируем поля ввода, ползунки и график —
-// на графике горизонтальное движение уже занято.
-(function initTabSwipe() {
-  let x0 = null, y0 = null, t0 = 0;
-  function blocked(el) {
-    while (el && el !== document.body) {
-      const tag = (el.tagName || '').toLowerCase();
-      if (tag === 'input' || tag === 'select' || tag === 'textarea' ||
-          tag === 'button' || tag === 'canvas') return true;
-      if (el.id === 'tabbar') return true;
-      el = el.parentElement;
-    }
-    return false;
-  }
-  document.addEventListener('touchstart', function(e) {
-    if (document.body.classList.contains('dialog-open')) { x0 = null; return; }
-    if (blocked(e.target)) { x0 = null; return; }
-    x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; t0 = Date.now();
-  }, { passive: true });
-  document.addEventListener('touchend', function(e) {
-    if (x0 === null) return;
-    const t = e.changedTouches[0];
-    const dx = t.clientX - x0, dy = t.clientY - y0;
-    x0 = null;
-    if (Date.now() - t0 > 700) return;
-    if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 1.6) return;
-    goTab(_tab + (dx < 0 ? 1 : -1));
-  }, { passive: true });
-})();
+// v48: свайп между вкладками убран — переключение только по панели.
+// Жест мешал горизонтальной прокрутке таблиц и ползункам на графике.
 
 
 // ═══════════════════════════════════════════════════
@@ -10912,6 +10780,8 @@ const I18N = {
   en: {
     t_balance:"Balance / Available", t_dhedge:"Delta hedging", t_alerts:"Price alerts",
     t_theme:"Switch theme", t_rotate:"Rotate screen", t_about:"About & legal info",
+    // v48: api tab
+    tab_api:"API",
     // v47: gamma scalp
     sc_h:"\u0420\u0435\u0437\u0443\u043b\u044c\u0442\u0430\u0442 \u043a\u0430\u043c\u043f\u0430\u043d\u0438\u0438",
     sc_loading:"Loading executions from the exchange\u2026",
@@ -11331,6 +11201,8 @@ const I18N = {
   ru: {
     t_balance:"\u0411\u0430\u043b\u0430\u043d\u0441 / \u0414\u043e\u0441\u0442\u0443\u043f\u043d\u043e", t_dhedge:"\u0414\u0435\u043b\u044c\u0442\u0430-\u0445\u0435\u0434\u0436\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u0435", t_alerts:"\u0410\u043b\u0435\u0440\u0442\u044b \u043f\u043e \u0446\u0435\u043d\u0435",
     t_theme:"\u0421\u043c\u0435\u043d\u0438\u0442\u044c \u0442\u0435\u043c\u0443", t_rotate:"\u041f\u043e\u0432\u0435\u0440\u043d\u0443\u0442\u044c \u044d\u043a\u0440\u0430\u043d", t_about:"\u041e \u043f\u0440\u0438\u043b\u043e\u0436\u0435\u043d\u0438\u0438 \u0438 \u044e\u0440\u0438\u0434\u0438\u0447\u0435\u0441\u043a\u0430\u044f \u0438\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0438\u044f",
+    // v48: vkladka api
+    tab_api:"API",
     // v47: gamma skalp
     sc_h:"\u0420\u0435\u0437\u0443\u043b\u044c\u0442\u0430\u0442 \u043a\u0430\u043c\u043f\u0430\u043d\u0438\u0438",
     sc_loading:"\u0417\u0430\u0433\u0440\u0443\u0436\u0430\u044e \u0438\u0441\u043f\u043e\u043b\u043d\u0435\u043d\u0438\u044f \u0441 \u0431\u0438\u0440\u0436\u0438\u2026",
