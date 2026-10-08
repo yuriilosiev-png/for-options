@@ -10711,6 +10711,31 @@ window.addEventListener('DOMContentLoaded', () => {
   setTimeout(resizeSlider, 100);
   setTimeout(resizeSlider, 500);
 
+  // ── v50: запрос оценки в Play (In-App Review) ──
+  // Окно оценки показываем, когда человек уже успел поработать: третий запуск
+  // и есть признак использования — подключённый ключ или собранная позиция.
+  // Предварительного «вам нравится?» нет намеренно: фильтровать по настроению
+  // и звать в Play только довольных запрещено политикой Play. Показываем один
+  // раз; дальше решает Google — у API своя квота, он может молча ничего не
+  // показать, и callback-а об этом не даёт.
+  (function maybeAskReview() {
+    try {
+      if (!(window.AndroidBridge && typeof AndroidBridge.requestReview === 'function')) return;
+      const KEY_N = 'oa-launches', KEY_DONE = 'oa-review-asked';
+      if (localStorage.getItem(KEY_DONE) === '1') return;
+      const n = (parseInt(localStorage.getItem(KEY_N), 10) || 0) + 1;
+      localStorage.setItem(KEY_N, String(n));
+      if (n < 3) return;
+      setTimeout(function () {
+        const used = (typeof S !== 'undefined')
+          && (S.connected || (S.legs && S.legs.length > 0));
+        if (!used) return;
+        localStorage.setItem(KEY_DONE, '1');
+        try { AndroidBridge.requestReview(); } catch (e) {}
+      }, 4000);
+    } catch (e) {}
+  })();
+
   // БАГ 1 FIX: Touch-обработчик заменён на PointerEvents API с setPointerCapture.
   // Touch API + writing-mode:vertical-lr конфликтует со scroll в Android WebView.
   // PointerEvents + setPointerCapture захватывают ввод надёжно и не теряют события.
