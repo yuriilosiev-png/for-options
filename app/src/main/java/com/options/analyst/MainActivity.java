@@ -31,6 +31,11 @@ import androidx.core.content.ContextCompat;
 
 import com.google.firebase.messaging.FirebaseMessaging;
 
+// v50: Play In-App Review — системное окно оценки прямо в приложении.
+import com.google.android.play.core.review.ReviewInfo;
+import com.google.android.play.core.review.ReviewManager;
+import com.google.android.play.core.review.ReviewManagerFactory;
+
 import java.lang.ref.WeakReference;
 
 public class MainActivity extends Activity {
@@ -250,6 +255,41 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public String getVersion() {
             return "2.1";
+        }
+
+        /**
+         * Вызывается из JS: AndroidBridge.requestReview()
+         * Показывает системное окно оценки Google Play внутри приложения.
+         *
+         * Важно: окно показывает Google, а не мы. У API своя квота на частоту,
+         * и он имеет право не показать ничего — callback-а об этом нет, и узнать,
+         * оставил ли человек оценку, нельзя. Это сделано намеренно, чтобы
+         * разработчик не мог привязать к оценке награду.
+         *
+         * Поэтому: никаких кнопок «оцените нас», никакого предварительного
+         * вопроса «вам нравится?» с переходом в Play только для довольных —
+         * и то и другое запрещено политикой Play по оценкам и отзывам.
+         * Решение, когда звать, принимает JS (см. maybeAskReview в index.html).
+         */
+        @JavascriptInterface
+        public void requestReview() {
+            final MainActivity a = activityRef.get();
+            if (a == null) return;
+            a.runOnUiThread(() -> {
+                try {
+                    final ReviewManager manager = ReviewManagerFactory.create(a);
+                    manager.requestReviewFlow().addOnCompleteListener(task -> {
+                        if (!task.isSuccessful()) {
+                            Log.w("AndroidBridge", "requestReviewFlow не удался");
+                            return;
+                        }
+                        ReviewInfo info = (ReviewInfo) task.getResult();
+                        manager.launchReviewFlow(a, info);
+                    });
+                } catch (Exception e) {
+                    Log.w("AndroidBridge", "requestReview: " + e.getMessage());
+                }
+            });
         }
 
         /**
