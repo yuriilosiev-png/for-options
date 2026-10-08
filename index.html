@@ -5278,8 +5278,12 @@ async function bybitGetWithProxy(path, params = {}) {
     if (json.retCode === undefined && typeof json.contents === 'string') {
       try { json = JSON.parse(json.contents); } catch(e) { /* не JSON внутри */ }
     }
-    if (json.retCode !== undefined && json.retCode !== 0)
+    if (json.retCode !== undefined && json.retCode !== 0) {
+      // v49: биржа ответила, но с кодом ошибки. Раньше это молча превращалось
+      // в "позиций нет" — отличить отказ от пустого списка было нельзя.
+      window.__lastBybitErr = path + ' -> retCode ' + json.retCode + ': ' + (json.retMsg || '');
       console.warn('[bybitGet] retCode:', json.retCode, json.retMsg);
+    }
     return json;
   }
 
@@ -5299,6 +5303,7 @@ async function bybitGetWithProxy(path, params = {}) {
     if (json.retCode !== undefined) return json;
     throw new Error('retCode отсутствует в ответе');
   } catch(e) {
+    window.__lastBybitErr = path + ' -> ' + e.message;
     console.warn('[bybitGet] прямой запрос не прошёл:', e.message);
     throw new Error(tr('err_bybit_all'));
   }
@@ -5529,6 +5534,7 @@ async function importPositions() {
 
     if (exchange === 'bybit') {
       console.log('[importPositions] начинаем импорт с Bybit, asset:', S.asset);
+      window.__lastBybitErr = null;   // v49
 
       // Пробуем USDC-опционы
       let positions = [];
@@ -5787,7 +5793,9 @@ async function importPositions() {
       // Если после опционов И фьючерсов пусто — тогда сообщаем, что ничего нет.
       if (!newLegs.length) {
         stopProgress();
-        showToast('info', tr('imp_none_bybit'));
+        // v49: если биржа отвечала ошибкой, показываем её, а не "позиций нет".
+        const le = window.__lastBybitErr;
+        showToast('info', tr('imp_none_bybit') + (le ? '\n\n' + tr('imp_last_err') + ' ' + le : ''));
         return;
       }
 
@@ -6142,6 +6150,7 @@ async function loadAllPositions() {
   }
   if (POS.loading) return;
   POS.loading = true;
+  window.__lastBybitErr = null;   // v49: собираем ошибку этой загрузки заново
   const refreshBtn = document.getElementById('pos-refresh-btn');
   refreshBtn.classList.add('spinning');
   setPosSection('options', '<div class="pos-loading">⏳ ' + tr('loading_options') + '</div>');
@@ -6171,6 +6180,7 @@ async function loadOptionPositions() {
   // Bybit требует baseCoin для опционов. Итерируем по популярным.
   const baseCoins = ['BTC', 'ETH', 'SOL'];
   const all = [];
+  const errs = [];   // v49
   for (const bc of baseCoins) {
     try {
       const res = await bybitGetWithProxy('/v5/position/list', {
@@ -6178,6 +6188,10 @@ async function loadOptionPositions() {
         baseCoin: bc,
         limit: '50',
       });
+      if (res && res.retCode !== undefined && res.retCode !== 0) {
+        errs.push(bc + ': retCode ' + res.retCode + ' ' + (res.retMsg || ''));
+        continue;
+      }
       if (res?.result?.list) {
         for (const p of res.result.list) {
           // Фильтруем нулевые
@@ -6185,9 +6199,12 @@ async function loadOptionPositions() {
         }
       }
     } catch(e) {
+      errs.push(bc + ': ' + e.message);
       console.warn('[opt-pos]', bc, e.message);
     }
   }
+  // v49: ничего не пришло И были отказы — это ошибка, а не пустой портфель.
+  if (!all.length && errs.length) throw new Error(errs.join(' | '));
   POS.options = all;
   setPosCount('options', all.length);
   renderOptionPositions(all);
@@ -6224,8 +6241,8 @@ function renderOptionPositions(list) {
         <div class="pos-opt-row"><span class="pol">${tr('pos_value')}</span><span class="por">${fmtPosNum(posValue, 4)}</span></div>
         <div class="pos-opt-row"><span class="pol">${tr('pos_avg_entry')}</span><span class="por">${fmtPosNum(avgPrice, 2)}</span></div>
         <div class="pos-opt-row"><span class="pol">${tr('pos_mark_iv')}</span><span class="por">${fmtPosNum(markPrice, 2)}${markIv?` (${(markIv*100).toFixed(1)}%)`:''}</span></div>
-        <div class="pos-opt-row"><span class="pol">Unrealized P&L</span><span class="por ${upnl>=0?'pos':'neg'}">${upnl>=0?'+':''}${fmtPosNum(upnl, 4)}</span></div>
-        <div class="pos-opt-row"><span class="pol">Realized P&L</span><span class="por ${rpnl>=0?'pos':'neg'}">${rpnl>=0?'+':''}${fmtPosNum(rpnl, 4)}</span></div>
+        <div class="pos-opt-row"><span class="pol">${tr('pos_upnl')}</span><span class="por ${upnl>=0?'pos':'neg'}">${upnl>=0?'+':''}${fmtPosNum(upnl, 4)}</span></div>
+        <div class="pos-opt-row"><span class="pol">${tr('pos_rpnl')}</span><span class="por ${rpnl>=0?'pos':'neg'}">${rpnl>=0?'+':''}${fmtPosNum(rpnl, 4)}</span></div>
         <div class="pos-opt-row"><span class="pol">${tr('pos_init_margin')}</span><span class="por">${initMargin==='--'?'--':fmtPosNum(parseFloat(initMargin),4)}</span></div>
         <div class="pos-opt-row"><span class="pol">${tr('pos_maint_margin')}</span><span class="por">${maintMargin==='--'?'--':fmtPosNum(parseFloat(maintMargin),4)}</span></div>
         <div class="pos-opt-greeks">
@@ -6243,18 +6260,21 @@ function renderOptionPositions(list) {
 async function loadFuturePositions() {
   const all = [];
   // Linear (USDT-settled)
+  let linErr = null;   // v49
   try {
     const res = await bybitGetWithProxy('/v5/position/list', {
       category: 'linear',
       settleCoin: 'USDT',
       limit: '50',
     });
-    if (res?.result?.list) {
+    if (res && res.retCode !== undefined && res.retCode !== 0) {
+      linErr = 'retCode ' + res.retCode + ' ' + (res.retMsg || '');
+    } else if (res?.result?.list) {
       for (const p of res.result.list) {
         if (parseFloat(p.size) !== 0) all.push({...p, _cat:'linear'});
       }
     }
-  } catch(e) { console.warn('[fut-pos] linear:', e.message); }
+  } catch(e) { linErr = e.message; console.warn('[fut-pos] linear:', e.message); }
   // Inverse (coin-margined) — опционально
   try {
     const res = await bybitGetWithProxy('/v5/position/list', {
@@ -6268,6 +6288,7 @@ async function loadFuturePositions() {
       }
     }
   } catch(e) { /* inverse не у всех — игнор */ }
+  if (!all.length && linErr) throw new Error(linErr);   // v49
   POS.futures = all;
   setPosCount('futures', all.length);
   renderFuturePositions(all);
@@ -6354,6 +6375,8 @@ async function loadSpotBalances() {
     const res = await bybitGetWithProxy('/v5/account/wallet-balance', {
       accountType: 'UNIFIED',
     });
+    if (res && res.retCode !== undefined && res.retCode !== 0)
+      throw new Error('retCode ' + res.retCode + ' ' + (res.retMsg || ''));   // v49
     coins = res?.result?.list?.[0]?.coin || [];
   } catch(e) {
     // Если не UNIFIED — попробуем SPOT
@@ -6745,16 +6768,22 @@ function drawHistoryChart() {
   const dayMap = {};
   for (const t of trades) {
     const d = new Date(t.ts);
-    const key = d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();
+    // v49 FIX: месяц и день с ведущим нулём. Без padStart ключ '2026-10-2'
+    // при строковой сортировке уходил ВПЕРЁД '2026-5-21' ("1" < "5") —
+    // октябрьские столбики рисовались слева, подписи оси шли не по порядку.
+    const key = d.getFullYear()
+      + '-' + String(d.getMonth()+1).padStart(2,'0')
+      + '-' + String(d.getDate()).padStart(2,'0');
     dayMap[key] = (dayMap[key] || 0) + t.pnl;
   }
   const days = Object.keys(dayMap).sort();
   const dayVals = days.map(k => dayMap[k]);
 
-  // Equity curve (накопительная от старых к новым)
-  const sortedForEquity = [...trades].sort((a,b) => a.ts - b.ts);
+  // v49: кривая считается по тем же дням, что и столбики. Раньше она шла по
+  // индексу сделки (69 точек), а столбики — по дням (~40): две разные шкалы
+  // на одном холсте, линия и столбики не совпадали по датам.
   const equity = []; let cum = 0;
-  for (const t of sortedForEquity) { cum += t.pnl; equity.push(cum); }
+  for (const v of dayVals) { cum += v; equity.push(cum); }
 
   const allVals = [...dayVals, ...equity, 0];
   const vMin = Math.min(...allVals) * 1.1;
@@ -6785,9 +6814,10 @@ function drawHistoryChart() {
 
   // Day bars (столбики P&L по дням)
   const n = days.length;
+  const xAt = i => padL + (i + 0.5) / Math.max(n,1) * cW;   // v49: общая шкала
   const barW = Math.max(2*dpr, (cW / Math.max(n,1)) * 0.6);
   for (let i = 0; i < n; i++) {
-    const x = padL + (i + 0.5) / n * cW;
+    const x = xAt(i);
     const v = dayVals[i];
     const y1 = toY(Math.max(0, v));
     const y2 = toY(Math.min(0, v));
@@ -6801,9 +6831,8 @@ function drawHistoryChart() {
   hCtx.lineWidth = 2*dpr;
   hCtx.beginPath();
   for (let i = 0; i < equity.length; i++) {
-    const x = padL + (i / Math.max(equity.length-1,1)) * cW;
     const y = toY(equity[i]);
-    i === 0 ? hCtx.moveTo(x,y) : hCtx.lineTo(x,y);
+    i === 0 ? hCtx.moveTo(xAt(i),y) : hCtx.lineTo(xAt(i),y);
   }
   hCtx.stroke();
 
@@ -6814,19 +6843,18 @@ function drawHistoryChart() {
   hCtx.fillStyle = grad;
   hCtx.beginPath();
   for (let i = 0; i < equity.length; i++) {
-    const x = padL + (i / Math.max(equity.length-1,1)) * cW;
     const y = toY(equity[i]);
-    i === 0 ? hCtx.moveTo(x,y) : hCtx.lineTo(x,y);
+    i === 0 ? hCtx.moveTo(xAt(i),y) : hCtx.lineTo(xAt(i),y);
   }
-  hCtx.lineTo(padL+cW, zeroY); hCtx.lineTo(padL, zeroY);
+  hCtx.lineTo(xAt(equity.length-1), zeroY); hCtx.lineTo(xAt(0), zeroY);
   hCtx.closePath(); hCtx.fill();
 
   // X axis date labels
   const maxLabels = Math.min(n, 6);
   hCtx.fillStyle = '#5a6585'; hCtx.font = `${8*dpr}px monospace`; hCtx.textAlign = 'center';
   for (let i = 0; i < maxLabels; i++) {
-    const idx = Math.round(i / (maxLabels-1) * (n-1));
-    const x = padL + (idx + 0.5) / n * cW;
+    const idx = Math.round(i / Math.max(maxLabels-1,1) * (n-1));
+    const x = xAt(idx);
     const d = days[idx] ? days[idx].slice(5) : ''; // MM-DD
     hCtx.fillText(d, x, padT+cH+14*dpr);
   }
@@ -11126,6 +11154,9 @@ const I18N = {
     perm_trade_detail_dbt:"The app doesn't need these rights — it only reads data. For safety we recommend a read-only key (account:read). Withdrawing funds with this key is not possible.",
     imp_connect_first:"Connect to the exchange first via the 🔌 API button",
     imp_none_bybit:"No open positions found.\n\nCheck:\n• API key has permission to read positions\n• There are open option or futures positions on Bybit\n• See console (F12) for details",
+    pos_upnl:"Unrealized P&L",
+    pos_rpnl:"Realized P&L",
+    imp_last_err:"Last exchange answer:",
     imp_none_deribit:"No open option positions found on Deribit.\n\nCheck: API key, Read permission, positions present.",
     imp_unrecognized:"Positions received but could not be recognized.\nSee console (F12) for details.",
     imp_unrecognized_dbt:"Positions received but the format could not be recognized.\nSee console (F12).",
@@ -11417,7 +11448,7 @@ const I18N = {
     pos_futures:"\u0424\u044c\u044e\u0447\u0435\u0440\u0441\u044b", pos_spot:"\u0421\u043f\u043e\u0442",
     pos_loading:"\u041f\u043e\u0434\u043a\u043b\u044e\u0447\u0438\u0442\u0435 API \u0438 \u043d\u0430\u0436\u043c\u0438\u0442\u0435 \u27f3",
     // --- Stage 2B: strategies (var. A = English terms, same in RU) ---
-    strat_short_strangle:"Sh.Стрэнгл", btn_calc:"🧮 Рассчитать", t_calc:"Калькулятор связки Short Strangle",
+    strat_short_strangle:"Sh.Strangle", btn_calc:"🧮 Рассчитать", t_calc:"Калькулятор связки Short Strangle",
     sc_title:"🧮 Калькулятор TP/SL", sc_params:"Параметры", sc_spot:"Цена базового актива", sc_dte:"До экспирации", sc_exp:"Экспирация",
     sc_mode:"Подбор страйков", sc_mode_delta:"По целевой дельте (обе ноги)", sc_mode_prem:"Равные премии (пут под колл)",
     sc_delta:"Целевая |дельта| ноги", sc_qty:"Контрактов", sc_corridor:"Ширина коридора", sc_dtrig:"Дней до срабатывания",
@@ -11548,6 +11579,9 @@ const I18N = {
     perm_trade_detail_dbt:"Приложению эти права не нужны — оно только читает данные. Для безопасности рекомендуем ключ только с правом чтения (account:read). Вывод средств этим ключом невозможен.",
     imp_connect_first:"Сначала подключитесь к бирже через кнопку 🔌 API",
     imp_none_bybit:"Открытых позиций не найдено.\n\nПроверьте:\n• API ключ имеет права на чтение позиций\n• Есть открытые опционные или фьючерсные позиции на Bybit\n• Посмотрите консоль (F12) для деталей",
+    pos_upnl:"Нереализованный P&L",
+    pos_rpnl:"Реализованный P&L",
+    imp_last_err:"Последний ответ биржи:",
     imp_none_deribit:"Открытых опционных позиций на Deribit не найдено.\n\nПроверьте: API ключ, права Read, наличие позиций.",
     imp_unrecognized:"Позиции получены, но не удалось их распознать.\nПосмотрите консоль (F12) для деталей.",
     imp_unrecognized_dbt:"Позиции получены, но не удалось распознать формат.\nПосмотрите консоль (F12).",
@@ -11692,14 +11726,21 @@ function refreshDynamicI18n() {
       }
     }
   } catch(e){}
-  // Позиции-modal (если открыта): перерисовать карточки под текущий язык
+  // Позиции: перерисовать карточки под текущий язык.
+  // v49 FIX: раньше стояло условие "модалка открыта". Но позиции грузятся один
+  // раз и остаются в DOM: переключив язык на другом экране и зайдя в «Позиции»,
+  // пользователь видел карточки на старом языке — заголовок и вкладки через
+  // data-i18n переводились, а поля внутри карточек нет.
   try {
-    var pm = document.getElementById('positions-modal');
-    if (pm && pm.classList.contains('open') && typeof POS !== 'undefined') {
-      if (POS.options.length && typeof renderOptionPositions === 'function') renderOptionPositions(POS.options);
-      if (POS.futures.length && typeof renderFuturePositions === 'function') renderFuturePositions(POS.futures);
-      if (POS.spot.length && typeof renderSpotBalances === 'function') renderSpotBalances(POS.spot);
+    if (typeof POS !== 'undefined') {
+      if (POS.options && POS.options.length && typeof renderOptionPositions === 'function') renderOptionPositions(POS.options);
+      if (POS.futures && POS.futures.length && typeof renderFuturePositions === 'function') renderFuturePositions(POS.futures);
+      if (POS.spot && POS.spot.length && typeof renderSpotBalances === 'function') renderSpotBalances(POS.spot);
     }
+  } catch(e){}
+  // v49: статистика волатильности — тоже собирается в JS, data-i18n не достаёт
+  try {
+    if (typeof _volState !== 'undefined' && _volState && typeof renderVolStats === 'function') renderVolStats();
   } catch(e){}
 }
 function toggleLang() {
