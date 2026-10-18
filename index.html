@@ -3466,7 +3466,14 @@ function updateLegPnlCells() {
 // Извлекает {price, iv, hasMarketData} из биржевого тикера.
 // Bybit: цены в USD напрямую. Deribit: цены в долях актива → умножаем на underlying.
 // Приоритет цены: mid (bid+ask)/2 → markPrice → bid/ask поодиночке → 0.
-function _extractTickerData(ticker, exchange) {
+function _extractTickerData(ticker, exchange, prefer) {
+  // v51: prefer === 'mark' → берём markPrice биржи, а не середину стакана.
+  // Для ОТКРЫТОЙ позиции это принципиально: именно по markPrice биржа считает
+  // нереализованный P&L и маржу, и именно его человек видит в приложении биржи.
+  // Середина стакана на опционах уезжает от mark тем сильнее, чем шире спред,
+  // то есть сильнее всего на дешёвых дальних страйках. Для ВХОДА в сделку
+  // (выбор ноги из цепочки, загрузка шаблона стратегии) середина остаётся —
+  // это ближе к тому, по чему реально исполнишься.
   if (!ticker) return { price: 0, iv: 0, hasMarketData: false };
   let bid, ask, mark, iv;
   if (exchange === 'bybit') {
@@ -3485,9 +3492,10 @@ function _extractTickerData(ticker, exchange) {
     iv   = parseFloat(ticker.mark_iv    || 0);
   }
   let price = 0;
-  if (bid > 0 && ask > 0)  price = (bid + ask) / 2;
-  else if (mark > 0)       price = mark;
-  else                     price = bid || ask || 0;
+  if (prefer === 'mark' && mark > 0) price = mark;
+  else if (bid > 0 && ask > 0)       price = (bid + ask) / 2;
+  else if (mark > 0)                 price = mark;
+  else                               price = bid || ask || 0;
   return {
     price: price,
     iv: iv > 0 ? Math.round(iv) : 0,
@@ -3601,7 +3609,7 @@ async function refreshLegMarks() {
           // Конвертируем leg.expiry (ISO) в Bybit-формат "12JUN26" для матчинга с парсером
           const expPart = isoToBybitExp(leg.expiry);
           const ticker = _findTicker(tickers, group.exchange, expPart, leg.strike, cp);
-          const data = _extractTickerData(ticker, group.exchange);
+          const data = _extractTickerData(ticker, group.exchange, 'mark');
           if (data.hasMarketData) {
             leg.currentMark = data.price;
             updatedCount++;
@@ -5665,7 +5673,7 @@ async function importPositions() {
             const cp = leg.type === 'option_call' ? 'C' : 'P';
             const expPart = isoToBybitExp(leg.expiry);
             const ticker = _findTicker(tickers, 'bybit', expPart, leg.strike, cp);
-            const data = _extractTickerData(ticker, 'bybit');
+            const data = _extractTickerData(ticker, 'bybit', 'mark');
             if (data.iv > 0) {
               leg.iv = parseFloat(data.iv.toFixed(1));
               console.log('[importPositions] реальная IV для', leg.strike, cp, '→', leg.iv + '%');
@@ -6107,7 +6115,19 @@ const POS = {
   futures: [],
   spot: [],
   loading: false,
+  lastLoad: 0,   // v51: когда данные пришли с биржи, мс
 };
+
+// v51: обновление позиций при ВХОДЕ на экран, а не только по кнопке.
+// Порог в 20 секунд нужен, чтобы перещёлкивание вкладок туда-сюда не колотило
+// биржу: три категории — это три приватных запроса, а у Bybit есть лимит и
+// временный бан IP при его превышении.
+const POS_STALE_MS = 20000;
+function refreshPositionsIfStale() {
+  if (!S.connected || POS.loading) return;
+  const empty = !POS.options.length && !POS.futures.length && !POS.spot.length;
+  if (empty || Date.now() - POS.lastLoad > POS_STALE_MS) loadAllPositions();
+}
 
 function openPositionsModal() {
   document.getElementById('positions-modal').classList.add('open');
@@ -6117,10 +6137,7 @@ function openPositionsModal() {
     setPosSection('spot', '<div class="pos-error">' + tr('connect_api_btn') + '</div>');
     return;
   }
-  // Авто-загрузка при первом открытии
-  if (!POS.options.length && !POS.futures.length && !POS.spot.length && !POS.loading) {
-    loadAllPositions();
-  }
+  refreshPositionsIfStale();   // v51: было — только при первом открытии
 }
 
 function closePositionsModal() {
@@ -6163,6 +6180,7 @@ async function loadAllPositions() {
     loadSpotBalances(),
   ]);
   POS.loading = false;
+  POS.lastLoad = Date.now();   // v51
   refreshBtn.classList.remove('spinning');
   // Рапорт об ошибках
   results.forEach((r, i) => {
@@ -10690,6 +10708,9 @@ window.addEventListener('DOMContentLoaded', () => {
       // не ждём следующего тика таймера (может быть до 30 сек устаревшие данные)
       refreshPrice();
       refreshLegMarks();
+      // v51: если экран позиций открыт — его тоже обновляем при возврате
+      const _pm = document.getElementById('positions-modal');
+      if (_pm && _pm.classList.contains('open')) refreshPositionsIfStale();
     }
   });
 
