@@ -5364,18 +5364,27 @@ async function checkBybitKeyPermissions() {
   if (arr('Derivatives').length)   tradeGroups.push('Derivatives');
   const hasTrade = tradeGroups.length > 0;
 
-  const isReadOnly = r.readOnly === 1;
+  const isReadOnly = r.readOnly === 1 || r.readOnly === '1';
 
-  if (isReadOnly && !hasWithdraw && !hasTransfer && !hasTrade) {
-    return { ok: true, level: 'safe',
-             title: tr('perm_safe_title'),
-             detail: tr('perm_safe_detail') };
-  }
-
+  // Вывод средств проверяем ДО всего остального, в том числе до readOnly.
+  // Документация Bybit описывает readOnly как 0 = Read and Write, 1 = Read only,
+  // но нигде не утверждает, что при readOnly=1 поле Withdraw появиться не может.
+  // Проверка существует ровно ради права на вывод, поэтому опираться здесь на
+  // недокументированное поведение нельзя: если Withdraw в ответе есть — предупреждаем.
   if (hasWithdraw) {
     return { ok: true, level: 'danger',
              title: tr('perm_withdraw_title'),
              detail: tr('perm_withdraw_detail') };
+  }
+
+  // Ключ «Только чтение»: перечисленные в нём права — на просмотр (история переводов,
+  // ордера, позиции). Собственный пример Bybit в документации показывает ключ с
+  // readOnly=1 и непустым Wallet — значит наличие группы прав само по себе ничего
+  // не говорит о возможности что-то сделать. Поэтому список прав здесь не важен.
+  if (isReadOnly) {
+    return { ok: true, level: 'safe',
+             title: tr('perm_safe_title'),
+             detail: tr('perm_safe_detail') };
   }
 
   if (hasTransfer) {
